@@ -1,0 +1,90 @@
+/* ===== Scope: Testimonials ===== */
+.testimonials{
+  background:#fff;                 /* đồng bộ nền với các section trên */
+  border-top:1px solid #e5dcf5;
+  padding:72px 20px;
+  color:#6f5aa7;                   /* tím chữ chính */
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+}
+
+.tms__container{
+  max-width:1100px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns: 1fr 1.2fr; /* trái: intro | phải: các review */
+  gap:48px;
+  align-items:start;
+}
+
+/* Left column */
+.tms__title{
+  font-size:2.2rem;
+  font-weight:700;
+  margin:0 0 10px;
+}
+
+.tms__subtitle{
+  margin:0 0 22px;
+  color:#8e7ec1;                   /* tím nhạt */
+  font-size:1rem;
+}
+
+.tms__cta{
+  padding:12px 32px;
+  background:#8f79d0;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(143,121,208,.18);
+  transition:all .2s ease;
+}
+.tms__cta:hover{ background:#7e69c4; transform:translateY(-2px) }
+
+/* Right column (reviews stack) */
+.tms__list{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.review{
+  background:#f6f4fb;             /* xám tím rất nhạt */
+  border:1px solid #efe9fb;
+  border-radius:12px;
+  padding:16px 18px;
+  box-shadow:0 6px 16px rgba(30,20,60,.06);
+  color:#6f5aa7;
+}
+
+.review__head{
+  display:grid;
+  grid-template-columns: 36px auto auto;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.review__avatar{
+  width:28px; height:28px; border-radius:50%;
+  background: linear-gradient(180deg,#e7dcfb,#ded0f7);
+  border:1px solid #d7c7f4;
+}
+
+.review__meta{ font-size:.9rem; color:#6f5aa7 }
+.review__stars{ margin-left:auto; color:#ffce3a; letter-spacing:2px; }
+
+.review__text{
+  margin:0;
+  color:#7a65aa;
+  font-size:.95rem;
+}
+
+/* Responsive */
+@media (max-width: 960px){
+  .tms__container{
+    grid-template-columns: 1fr; 
+  }
+  .tms__intro{ text-align:center }
+}

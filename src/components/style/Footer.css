@@ -1,0 +1,79 @@
+/* ===== Footer (match mockup) ===== */
+.site-footer{
+  background:#cdb5f7;               /* tím nhạt đặc */
+  color:#fff;
+  font-family:"Poppins","Segoe UI",Arial,sans-serif;
+  padding:36px 20px 22px;
+}
+
+/* top row: brand left, columns right */
+/* 1) Căn giữa hàng trong khu ft-top */
+.ft-top{
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 40px;
+  align-items: center;        /* << quan trọng: giữa theo chiều dọc của hàng */
+}
+
+/* 2) Cụm brand căn giữa theo trục dọc */
+.ft-brand{
+  display: flex;
+  align-items: center;        /* << logo và chữ nằm giữa nhau */
+  gap: 22px;
+}
+
+/* 3) Tránh lệch baseline của ảnh */
+.ft-logo{
+  width: 84px;
+  height: 84px;
+  display: block;             /* << không bị kéo theo baseline */
+}
+
+/* Chữ to & gọn */
+.ft-name{
+  font-size: 72px;            /* tăng/giảm tuỳ ý (60–80px) */
+  line-height: 1;             /* không đội chiều cao */
+  font-weight: 750;
+  color: #fff;
+}
+.ft-brand { justify-self: center; }
+
+.ft-columns{
+  display:flex; gap:60px; justify-content:flex-start;
+}
+.ft-col{ min-width:140px; display:flex; flex-direction:column; gap:10px }
+.ft-col h4{
+  margin:0 0 6px; color:#fff; font-size:16px; font-weight:700;
+}
+.ft-col a{
+  color:#f3ecff; text-decoration:none; font-weight:500;
+  opacity:.95;
+}
+.ft-col a:hover{ opacity:1; text-decoration:underline }
+
+/* divider */
+.ft-divider{
+  border:0; height:1px;
+  background: rgba(255,255,255,.45);   /* đường kẻ mảnh */
+  max-width:1100px; margin:18px auto;
+}
+
+/* bottom row */
+.ft-bottom{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  color:#f3ecff;
+  font-weight:500;
+}
+.ft-legal{ display:flex; gap:28px }
+.ft-legal a{ color:#f3ecff; text-decoration:none }
+.ft-legal a:hover{ text-decoration:underline }
+
+/* responsive */
+@media (max-width: 900px){
+  .ft-top{ grid-template-columns:1fr; gap:24px; text-align:left }
+  .ft-name{ font-size:42px }
+  .ft-columns{ gap:40px }
+  .ft-bottom{ flex-direction:column; gap:10px }
+}

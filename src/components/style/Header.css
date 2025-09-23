@@ -1,0 +1,76 @@
+/* ===== Header ===== */
+.header {
+  background: #cdb5f7; /* tím nhạt giống ảnh */
+}
+
+.header__container{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 32px;
+  display: grid;
+  grid-template-columns: 220px 1fr 260px; /* logo | nav | search */
+  align-items: center;
+  gap: 16px;
+  color: #fff;
+}
+
+/* Logo trái */
+.logo{display:flex; align-items:center; gap:10px; text-decoration:none; color:#fff}
+.logo__img{width:32px; height:32px; border-radius:50%}
+.logo__text{font-size:1.8rem; font-weight:700; letter-spacing:.1px}
+
+/* Nav giữa */
+.nav{justify-self:center}
+.nav-links{
+  list-style:none;
+  display:flex;
+  gap:28px;
+  margin:0; padding:0;
+}
+.nav-links a{
+  color:#fff; text-decoration:none; font-weight:500; font-size:.95rem;
+  opacity:.95; transition:opacity .2s;
+}
+.nav-links a:hover{opacity:1}
+
+/* Search phải: ô bo tròn, viền trắng, có icon */
+.search{
+  justify-self:end;
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.search input{
+  width: 210px;
+  height: 34px;
+  padding: 0 38px 0 14px;           /* chừa chỗ cho icon */
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.8);
+  background: transparent;
+  color:#fff;
+  outline:none;
+  font-size:.92rem;
+}
+.search input::placeholder{color:#f1ecff}
+.search__btn{
+  position:absolute;
+  right:6px;
+  height:28px; width:28px;
+  display:grid; place-items:center;
+  border:none; background:transparent; color:#fff; cursor:pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .header__container{
+    grid-template-columns: 1fr auto;   /* logo | search */
+    grid-template-areas:
+      "logo search"
+      "nav nav";
+    row-gap:10px;
+  }
+  .logo{grid-area:logo}
+  .nav{grid-area:nav; justify-self:center}
+  .search{grid-area:search}
+  .nav-links{flex-wrap:wrap; gap:18px}
+}

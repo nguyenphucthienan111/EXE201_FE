@@ -1,0 +1,78 @@
+/* ===== Scope: Explore Features ===== */
+.explore {
+  background: #fff;
+  border-top: 1px solid #e5dcf5;
+  padding: 72px 20px 56px;
+}
+
+.explore__container {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Title & subtitle */
+.explore__title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #6f5aa7;
+  margin: 0 0 8px;
+}
+.explore__subtitle {
+  color: #8e7ec1;
+  font-size: 1rem;
+  margin: 0 0 22px;
+}
+
+/* CTA button */
+.explore__cta {
+  padding: 12px 70px;
+  background: #8f79d0;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+  margin-bottom: 44px;
+  box-shadow: 0 4px 10px rgba(143,121,208,.18);
+}
+.explore__cta:hover {
+  background: #7e69c4;
+  transform: translateY(-2px);
+}
+
+/* Grid */
+.explore__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* Card */
+.explore-card {
+  background: #fff;
+  border: 1px solid #ece8f6;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 16px rgba(30,20,60,.06);
+  text-align: center;
+}
+.explore-card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.explore-card__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6f5aa7;
+  margin: 0 0 6px;
+}
+.explore-card__desc {
+  font-size: .95rem;
+  color: #8a7bc3;
+  margin: 0;
+}

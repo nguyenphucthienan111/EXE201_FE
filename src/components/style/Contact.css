@@ -1,0 +1,254 @@
+:root{
+  --purple:#6f5aa7;     /* tiêu đề */
+  --purple-2:#8e7ec1;   /* mô tả/label */
+  --btn:#8f79d0;
+  --btn-hover:#8f79d0;
+  --line:#ebe5f8;
+}
+
+/* Trang */
+.contact{
+  background:#fff;
+  color:var(--purple);
+  font-family:"Poppins","Segoe UI",Arial,sans-serif;
+}
+
+/* ===== HERO ===== */
+.contact-hero{
+  max-width: 1120px;
+  margin: 32px auto 16px;
+  padding: 0 20px;
+  text-align:center;
+}
+.contact-hero h1{
+  font-size: 2.4rem;        /* nhỏ lại cho thanh thoát */
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.contact-hero p{
+  margin: 0 0 18px;
+  color: var(--purple-2);
+}
+
+.contact-actions{
+  display:flex; gap:14px; justify-content:center;
+}
+
+/* Buttons */
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem; /* khoảng cách giữa 2 nút */
+  margin-top: 1.5rem;
+}
+
+.cta-buttons button {
+  min-width: 180px;        /* chiều rộng tối thiểu giống nhau */
+  padding: 10px 40px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.faq-btn {
+  background-color: transparent;
+  border: 2px solid #7c5fc0;
+  color: #7c5fc0;
+}
+
+.faq-btn:hover {
+  background-color: #7c5fc0;
+  color: white;
+}
+
+.learn-btn {
+  background-color: #7c5fc0;
+  border: 2px solid #7c5fc0;
+  color: white;
+}
+
+.learn-btn:hover {
+  background-color: #6a4fb5;
+}
+
+
+/* Đường kẻ mảnh */
+.contact-rule{
+  border:0; height:1px; background:var(--line);
+  max-width: 920px;           /* vừa mắt như ảnh */
+  margin: 22px auto 0;
+}
+
+/* ===== FORM ===== */
+.contact-form {
+  text-align: center;
+  margin: 3rem auto;
+  max-width: 1000px;
+}
+.contact-form h2{
+  font-size:2rem;
+  font-weight:700;
+  margin:0 0 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem; /* khoảng cách giữa rows */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 cột */
+  gap: 1.5rem; /* khoảng cách giữa các input */
+  width: 100%;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.form-group input {
+  padding: 0.8rem;
+  border: 1px solid #e2d9f3;
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #7c4dff;
+  box-shadow: 0 0 8px rgba(124, 77, 255, 0.3);
+}
+
+.send-btn {
+  background: #8f79d0;
+  color: white;
+  border: none;
+  padding: 0.8rem 3rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s ease;
+}
+
+.send-btn:hover {
+  background: #6a3ed9;
+}
+
+
+/* 3 cột: Name / Email / Message */
+.form-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 40px;
+  text-align:left;
+}
+
+.field label{
+  display:block;
+  font-size:.92rem;
+  font-weight:700;
+  color:var(--purple-2);
+  margin: 0 0 8px;
+}
+
+.field input{
+  width:100%;
+  height: 44px;               /* cùng chiều cao cho 3 ô */
+  padding: 0 14px;
+  border:1px solid var(--line);
+  border-radius: 10px;
+  background:#fff;
+  color:var(--purple);
+  outline:none;
+  box-shadow: inset 0 2px 6px rgba(30,20,60,.04);
+}
+.field input::placeholder{ color:#b7aedc }
+
+/* Nút gửi */
+.form-actions{
+  grid-column:1 / -1;
+  display:flex; justify-content:center;
+  margin-top: 4px;
+}
+.btn.big{
+  padding: 13px 34px;
+  border-radius: 999px;        /* pill */
+  box-shadow:0 10px 22px rgba(143,121,208,.18);
+}
+.support-section {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: #fff;
+}
+
+.support-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6b4db5;
+  margin-bottom: 2.5rem;
+}
+
+.support-items {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
+}
+
+.support-card {
+  max-width: 220px;
+  text-align: center;
+  color: #5d3d8b;
+}
+
+.icon-circle {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem auto;
+  border-radius: 50%;
+  background-color: #f3f0fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon-circle img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.support-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.support-card p {
+  font-size: 0.9rem;
+  color: #9a85c5;
+}
+
+.support-card .link {
+  color: #7c5fc0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.support-card .link:hover {
+  color: #5d3d8b;
+}
+
+
+/* Responsive */
+@media (max-width: 980px){
+  .form-grid{ grid-template-columns: 1fr; }
+}
