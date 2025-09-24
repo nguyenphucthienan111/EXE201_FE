@@ -1,0 +1,268 @@
+.about {
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+  color: #5d3d8b;
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #fafafa;
+}
+
+.about-hero h1,
+.about-built h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6c47a6;
+  margin-bottom: 0.5rem;
+}
+
+.about-hero p,
+.about-built p {
+  color: #7a5ca3;
+  max-width: 700px;
+  margin: 0.5rem auto 1.5rem;
+  font-size: 1rem;
+}
+
+.start-btn {
+  background: #8c6cc9;
+  color: white;
+  border: none;
+  padding: 0.8rem 4rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.start-btn:hover {
+  background: #6c47a6;
+}
+
+.about-rule {
+  margin: 2rem auto;
+  width: 80%;
+  border: 0.5px solid #ddd;
+}
+
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 4rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #d1c4e9;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem 4rem 1.2rem;
+  width: 320px;                    /* rộng hơn để đủ chỗ cho ảnh và chữ */
+  min-height: 200px;                 /* thấp hơn */
+  text-align: left;
+  display: flex;
+  flex-direction: row;      /* đổi từ column sang row */
+  align-items: flex-start;  /* căn top */
+  justify-content: flex-start;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(93, 61, 139, 0.06); /* shadow nhẹ mặc định */
+  margin-bottom: 30px
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(93, 61, 139, 0.13); /* shadow hover đậm hơn */
+}
+
+.card-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-right: 1.2rem;    /* cách chữ sang phải */
+  margin-bottom: 0;        /* bỏ margin-bottom */
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  display: block;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card h3 {
+  color: #6c47a6;                    /* màu tối hơn */
+  font-size: 1.18rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  color: #8d7bbd;                    /* màu chữ nhạt hơn */
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+/* Phần giới thiệu đội ngũ */
+.about-team {
+  margin: 3rem 0 2rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.team-card {
+  background: #fff;
+  border: 1px solid #ede7f6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(93, 61, 139, 0.06);
+  display: flex;
+  align-items: center;
+  width: 90%;
+  max-width: 1100px;
+  padding: 2.5rem 2.5rem 2.5rem 2rem;
+  gap: 2.5rem;
+}
+
+.team-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #ece8f4;
+  flex-shrink: 0;
+}
+
+.team-info {
+  flex: 1;
+}
+
+.team-info h3 {
+  color: #7a5ca3;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.team-info p {
+  color: #8d7bbd;
+  font-size: 1.08rem;
+  margin-bottom: 0;
+}
+
+.team-btn {
+  background: #8c6cc9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-left: 2rem;
+}
+
+.team-btn:hover {
+  background: #6c47a6;
+}
+
+/* Đội ngũ - phiên bản không viền */
+.about-team-plain {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 3rem auto 2rem auto;
+  padding: 0;
+}
+
+.about-team-plain .team-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #ece8f4;
+  flex-shrink: 0;
+}
+
+.about-team-plain .team-info {
+  flex: 1;
+  text-align: left;
+}
+
+.about-team-plain .team-info h3 {
+  color: #7a5ca3;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.about-team-plain .team-info p {
+  color: #8d7bbd;
+  font-size: 1.08rem;
+  margin-bottom: 0;
+}
+
+.about-team-plain .team-btn {
+  background: #8c6cc9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-left: 2rem;
+}
+
+.about-team-plain .team-btn:hover {
+  background: #6c47a6;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 900px) {
+  .card-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .card {
+    width: 90%;
+    min-width: 0;
+    flex-direction: column; /* về lại dọc khi mobile */
+    align-items: flex-start;
+  }
+  .card-img {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  .team-card {
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+  .team-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+  .about-team-plain {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0;
+  }
+  .about-team-plain .team-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+  .about-team-plain .team-info {
+    text-align: center;
+  }
+}

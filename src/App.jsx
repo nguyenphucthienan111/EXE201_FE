@@ -10,7 +10,7 @@ import Home from "../src/components/Home/Home";
 
 
 import Contact from "../src/components/Contact/Contact";
-
+import About from "../src/components/About/About";
 
 
 import "./App.css";
@@ -24,6 +24,7 @@ export default function App() {
 
        
         <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
     
 
         {/* 404 */}
