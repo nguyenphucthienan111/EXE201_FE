@@ -246,6 +246,37 @@
 .support-card .link:hover {
   color: #5d3d8b;
 }
+/* ===== Modal ===== */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  display:flex; align-items:center; justify-content:center; z-index:1000;
+}
+.modal{
+  width:min(720px, 92vw); max-height:85vh; overflow:auto;
+  background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+  animation:pop .15s ease-out;
+}
+@keyframes pop{ from{ transform:scale(.98); opacity:.8 } to{ transform:scale(1); opacity:1 } }
+.modal__header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 20px; border-bottom:1px solid #eee;
+}
+.modal__header h3{ margin:0; color:#6f5aa7; font-weight:700;font-size: 1.5rem; }
+.modal__close{ background:none; border:none; font-size:24px; line-height:1; cursor:pointer; color:#6f5aa7; }
+.modal__body{ padding:16px 20px 20px; }
+
+/* ===== FAQ items (dùng cho modal & accordion) ===== */
+.faq-list{ display:grid; gap:10px; }
+.faq-item{
+  border:1px solid #ebe5f8; border-radius:10px; overflow:hidden; background:#fff;
+}
+.faq-q{
+  list-style:none; padding:14px 16px; cursor:pointer; color:#5d3d8b; font-weight:700;
+}
+.faq-q::-webkit-details-marker{ display:none; }
+.faq-item[open] .faq-q{ background:#faf7ff; }
+.faq-a{ padding:0 16px 14px; color:#7a67aa; line-height:1.55; }
+
 
 
 /* Responsive */
