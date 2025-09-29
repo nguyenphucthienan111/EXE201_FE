@@ -71,11 +71,11 @@
   color: inherit;
   cursor: pointer;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 420;
 }
 
 .linklike:hover {
-  opacity: 0.85;
+  opacity: 0.95;
 }
 
 .linklike:focus-visible {
