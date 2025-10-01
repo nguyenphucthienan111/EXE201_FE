@@ -10,6 +10,9 @@ import Home from "../src/components/Home/Home";
 import Contact from "../src/components/Contact/Contact";
 import About from "../src/components/About/About";
 import LoginPage from "../src/components/Auth/LoginPage"; // nhớ import LoginPage mới
+import JournalEntriesPage from "../src/components/Journaling/JournalEntriesPage"; // ⭐ import trang JournalEntriesPage
+import TemplateChooser from "./components/Journaling/TemplateChooser";
+import PremiumPage from "./components/Premium/PremiumPage";
 
 import "./App.css";
 
@@ -29,7 +32,10 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<LoginPage />} />
-
+        <Route path="/premium" element={<PremiumPage />} />
+       {/* Journal */}
+        <Route path="/journal" element={<JournalEntriesPage />} />
+        <Route path="/journal/templates" element={<TemplateChooser />} />
         {/* 404 */}
         <Route path="*" element={<div style={{ padding: 24 }}>Not found</div>} />
       </Routes>

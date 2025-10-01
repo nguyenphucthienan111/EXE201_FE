@@ -1,0 +1,117 @@
+:root{
+  --bg:#ffffff;
+  --ink:#231b33;
+  --muted:#80739a;
+  --line:#ece7f6;
+  --brand:#6f53d9;     /* tím chủ đạo */
+  --brand-2:#b48ad7;   /* tím phụ */
+  --surface:#ffffff;
+  --shadow:0 12px 32px rgba(26,17,48,.08);
+  --radius:16px;
+}
+
+.prx-root{background:var(--bg); color:var(--ink);}
+
+/* ---------- HERO ---------- */
+.prx-hero{max-width:1000px;margin:56px auto 18px;text-align:center;padding:0 16px}
+.prx-chip{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:6px 12px;border-radius:999px;background:#efe9ff;color:#5b39d4;
+  font-weight:700;font-size:.8rem;margin-bottom:10px;
+}
+.prx-hero h1{margin:0 0 8px;font-size:36px;letter-spacing:.2px}
+.prx-hero p{margin:0 0 18px;color:var(--muted)}
+
+/* ---------- TOGGLE ---------- */
+.prx-toggle{
+  display:inline-flex;border:1px solid var(--line);border-radius:12px;
+  background:#faf7ff;box-shadow:var(--shadow);gap:6px;padding:6px;
+}
+.prx-seg{
+  padding:8px 14px;border-radius:8px;border:0;background:transparent;cursor:pointer;
+  font-weight:700;color:#6c5a92;
+}
+.prx-seg.is-active{
+  background:#fff;color:#4a2fd1;box-shadow:0 4px 14px rgba(74,47,209,.15);
+}
+.prx-save{margin-left:8px;background:#ffe3ec;color:#d12f7b;
+  padding:2px 6px;border-radius:6px;font-size:.7rem;font-weight:800}
+
+/* ---------- GRID ---------- */
+.prx-grid{
+  max-width:1000px;margin:24px auto 56px;padding:0 16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+}
+
+/* ---------- CARD BASE ---------- */
+.prx-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden;
+  transition:transform .15s ease, box-shadow .2s ease;
+}
+.prx-card:hover{ transform: translateY(-3px); box-shadow:0 16px 36px rgba(26,17,48,.10); }
+
+.prx-card-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.prx-card-head h3{margin:0;font-size:20px;letter-spacing:.2px; font-weight:800; color:#4a2fd1}
+.prx-price{
+  display:flex;align-items:baseline;gap:6px;white-space:nowrap;   /* tránh che/sụp dòng */
+}
+.prx-price-main{font-size:34px;font-weight:900;color:#2c2341;line-height:1}
+.prx-price-unit{color:var(--muted);font-size:.95rem}
+
+/* danh sách tính năng */
+.prx-list{list-style:none;padding:10px 0 0;margin:0;display:grid;gap:12px}
+.prx-list li{display:flex;gap:10px;align-items:flex-start;color:#40365a; line-height:1.35}
+.prx-check{color:#4a2fd1;flex:0 0 auto;margin-top:2px}
+
+/* ---------- PRO CARD (highlight) ---------- */
+.prx-card.pro{
+  border-color:transparent;
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(135deg,#7c58d9 0%, #b48ad7 50%, #71d7dd 100%) border-box;
+  border:1px solid transparent;
+}
+.prx-card.pro .prx-price-main{ color:#2a2050; }
+.prx-card.pro .prx-card-head{ padding-top:8px; padding-right:124px; } /* chừa chỗ cho badge */
+
+/* Badge: không che giá, cố định góc phải */
+.prx-badge{
+  position:absolute; top:20px; right:18px;
+  background:#4a2fd1; color:#fff; font-weight:800; font-size:.72rem;
+  padding:6px 10px; border-radius:999px; letter-spacing:.2px;
+  box-shadow:var(--shadow); pointer-events:none;
+}
+
+/* ---------- ACTIONS ---------- */
+.prx-actions{margin-top:18px}
+.prx-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 16px;border-radius:10px;text-decoration:none;font-weight:800;
+  transition:transform .05s ease, box-shadow .2s ease;
+}
+.prx-btn.primary{
+  background:#4a2fd1;color:#fff;box-shadow:0 10px 22px rgba(74,47,209,.25)
+}
+.prx-btn.primary:hover{transform:translateY(-1px)}
+.prx-btn.ghost{background:#fff;border:1px solid var(--line);color:#4a2fd1}
+.prx-btn.ghost:hover{box-shadow:0 10px 22px rgba(26,17,48,.06)}
+.prx-fine{color:var(--muted);font-size:.85rem;margin-top:10px}
+
+/* ---------- WHY US ---------- */
+.prx-why{max-width:1000px;margin:0 auto 80px;padding:0 16px}
+.prx-why h2{margin:0 0 14px;font-size:22px;color:#4a2fd1}
+.prx-why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.prx-why-item{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fcfbff}
+.prx-why-emoji{width:36px;height:36px;border-radius:10px;background:#f2ecff;
+  display:grid;place-items:center;margin-bottom:8px;font-size:18px}
+.prx-why-item h4{margin:0 0 4px}
+.prx-why-item p{margin:0;color:var(--muted)}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 900px){
+  .prx-grid{grid-template-columns:1fr}
+  .prx-why-grid{grid-template-columns:1fr}
+  .prx-card.pro .prx-card-head{padding-right:0;} /* mobile: không cần chừa nhiều */
+  .prx-badge{right:12px;}
+}

@@ -16,7 +16,7 @@
 
 /* Logo trái */
 .logo{display:flex; align-items:center; gap:10px; text-decoration:none; color:#fff}
-.logo__img{width:32px; height:32px; border-radius:50%}
+.logo__img{width:40px; height:40px; border-radius:50%}
 .logo__text{font-size:1.8rem; font-weight:700; letter-spacing:.1px}
 
 /* Nav giữa */
