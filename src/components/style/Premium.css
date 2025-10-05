@@ -107,6 +107,54 @@
   display:grid;place-items:center;margin-bottom:8px;font-size:18px}
 .prx-why-item h4{margin:0 0 4px}
 .prx-why-item p{margin:0;color:var(--muted)}
+/* Nút nhỏ trong thanh thông báo */
+.prx-inline-btn {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f7f7f7;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.prx-inline-btn:hover {
+  background-color: #eaeaea;
+  border-color: #aaa;
+}
+
+/* Biến thể ghost */
+.prx-inline-btn.ghost {
+  background-color: transparent;
+  border-color: #ddd;
+  color: #555;
+}
+
+.prx-inline-btn.ghost:hover {
+  background-color: #f5f5f5;
+}
+.prx-inline-btn {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background-color: #f7f7f7;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.prx-inline-btn:hover { background-color: #eee; border-color: #bdbdbd; }
+.prx-inline-btn:disabled { opacity: .5; cursor: not-allowed; }
+.prx-inline-btn.ghost { background: transparent; border-color: #e0e0e0; color: #555; }
+.prx-inline-btn.ghost:hover { background: #f6f6f6; }
+
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 900px){

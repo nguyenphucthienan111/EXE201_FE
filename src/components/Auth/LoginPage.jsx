@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
+import { login, register, loginWithGoogle } from "../../services/authService";
 
 const LoginPage = () => {
   const containerRef = useRef(null);
@@ -11,6 +12,7 @@ const LoginPage = () => {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginSuccess, setLoginSuccess] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Register state
   const [regEmail, setRegEmail] = useState("");
@@ -18,6 +20,7 @@ const LoginPage = () => {
   const [regConfirm, setRegConfirm] = useState("");
   const [registerError, setRegisterError] = useState("");
   const [registerSuccess, setRegisterSuccess] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false);
 
   const handleRegisterClick = () => {
     containerRef.current?.classList.add("login-active");
@@ -31,42 +34,93 @@ const LoginPage = () => {
     navigate("/");
   };
 
-  const handleRegisterSubmit = (e) => {
+  // --- REGISTER ---
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setRegisterError("");
     setRegisterSuccess("");
 
     if (!regEmail || !regPassword) {
-  setRegisterError("Please enter both email and password.");
+      setRegisterError("Please enter both email and password.");
       return;
     }
     if (regPassword !== regConfirm) {
-  setRegisterError("Password confirmation does not match.");
+      setRegisterError("Password confirmation does not match.");
       return;
     }
 
-    // Mock (chưa gắn API)
-  setRegisterSuccess("Registration successful (demo)!");
-    setRegEmail("");
-    setRegPassword("");
-    setRegConfirm("");
+    try {
+      setRegisterLoading(true);
+      const data = await register({ email: regEmail, password: regPassword });
+      const msg =
+        data?.message ||
+        "Registration successful. Please check your email for the verification code.";
+      setRegisterSuccess(msg);
+
+      // Lưu email để verify
+      localStorage.setItem("pending_verify_email", regEmail);
+
+      setRegEmail("");
+      setRegPassword("");
+      setRegConfirm("");
+
+      // Chuyển sang trang verify
+      setTimeout(() => {
+        navigate(`/verify?email=${encodeURIComponent(regEmail)}`);
+      }, 800);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Register failed.";
+      setRegisterError(msg);
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
-  const handleLoginSubmit = (e) => {
+  // --- LOGIN ---
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoginError("");
     setLoginSuccess("");
 
     if (!loginEmail || !loginPassword) {
-  setLoginError("Please enter both email and password.");
+      setLoginError("Please enter both email and password.");
       return;
     }
 
-    // Mock (chưa gắn API)
-  setLoginSuccess("Login successful (demo)!");
-    setLoginEmail("");
-    setLoginPassword("");
-    setTimeout(() => navigate("/"), 1000);
+    try {
+      setLoginLoading(true);
+      const data = await login({ email: loginEmail, password: loginPassword });
+
+      const token = data?.accessToken || data?.token;
+      const refresh = data?.refreshToken;
+      if (token) localStorage.setItem("access_token", token);
+      if (refresh) localStorage.setItem("refresh_token", refresh);
+      if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
+
+      setLoginSuccess("Login successful!");
+      setLoginEmail("");
+      setLoginPassword("");
+
+      setTimeout(() => navigate("/"), 600);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Login failed.";
+      setLoginError(msg);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // --- GOOGLE LOGIN ---
+  const handleGoogleLogin = () => {
+    loginWithGoogle();
   };
 
   return (
@@ -101,9 +155,21 @@ const LoginPage = () => {
               <i className="bx bxs-lock-alt"></i>
             </div>
             <div className="login-forgot-link">
-              <a href="#">Forgot password?</a>
+              <a href="/forgot-password">Forgot password?</a>
             </div>
-            <button type="submit" className="login-btn">Login</button>
+            <button type="submit" className="login-btn" disabled={loginLoading}>
+              {loginLoading ? "Logging in..." : "Login"}
+            </button>
+
+            {/* Google Login */}
+            <button
+              type="button"
+              className="login-btn"
+              style={{ marginTop: "10px", backgroundColor: "#db4437" }}
+              onClick={handleGoogleLogin}
+            >
+              Continue with Google
+            </button>
 
             <div className="login-notification-area">
               {loginError && <div className="login-token-notice login-error">{loginError}</div>}
@@ -146,7 +212,9 @@ const LoginPage = () => {
               />
               <i className="bx bxs-lock-alt"></i>
             </div>
-            <button type="submit" className="login-btn">Register</button>
+            <button type="submit" className="login-btn" disabled={registerLoading}>
+              {registerLoading ? "Registering..." : "Register"}
+            </button>
 
             <div className="login-notification-area">
               {registerError && <div className="login-token-notice login-error">{registerError}</div>}

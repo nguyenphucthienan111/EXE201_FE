@@ -1,5 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "../style/Premium.css";
+import {
+  createPremiumPayment,
+  getPremiumPaymentStatus,
+  checkUserPlan,
+  resetPremiumPending,
+} from "../../services/paymentService";
+import PropTypes from "prop-types";
 
 const featuresFree = [
   "Daily diary (1–2 posts/day)",
@@ -18,15 +25,125 @@ const featuresPro = [
 ];
 
 export default function Pricing() {
-  // toggle Monthly / Yearly (-20%)
-  const [billing, setBilling] = useState("monthly"); // 'monthly' | 'yearly'
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-  const prices = useMemo(() => {
-    const base = 7.99;
-    const pro = billing === "monthly" ? base : Math.round(base * 2 * 0.8 * 100) / 100;
-    const unit = billing === "monthly" ? "/6 month" : "/year";
-    return { pro, unit };
-  }, [billing]);
+  const [plan, setPlan] = useState("free"); // 'free' | 'premium'
+  const [status, setStatus] = useState({
+    hasActivePayment: false,
+    paymentExpired: true,
+    timeLeft: 0,
+    paymentUrl: "",
+  });
+
+  const pollRef = useRef(null);
+
+  // helpers
+  const fetchAll = async () => {
+    setErr("");
+    try {
+      setLoading(true);
+      const [planRes, sttRes] = await Promise.all([
+        checkUserPlan().catch(() => null),
+        getPremiumPaymentStatus().catch(() => null),
+      ]);
+
+      if (planRes?.data?.plan) setPlan(planRes.data.plan);
+      if (sttRes?.data) setStatus((s) => ({ ...s, ...sttRes.data }));
+    } catch (e) {
+      const m = e?.response?.data?.message || e?.message || "Failed to load payment status.";
+      setErr(m);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+
+    // Poll nhẹ để cập nhật timeLeft/paymentUrl khi đang pending
+    pollRef.current = setInterval(async () => {
+      try {
+        const sttRes = await getPremiumPaymentStatus();
+        if (sttRes?.data) setStatus((s) => ({ ...s, ...sttRes.data }));
+      } catch { /* empty */ }
+    }, 8000); // 8s
+
+    return () => pollRef.current && clearInterval(pollRef.current);
+  }, []);
+
+  const gotoPayment = (url) => {
+    if (!url) return;
+    window.location.href = url; // redirect sang cổng thanh toán
+  };
+
+  // 🔑 Luôn đảm bảo mở đơn MỚI, tránh dùng order cũ gây lỗi ở PayOS
+  const resumeOrCreate = async () => {
+    setErr("");
+    setActionLoading(true);
+    try {
+      // Lấy trạng thái mới nhất
+      const sttRes = await getPremiumPaymentStatus().catch(() => null);
+      const latest = sttRes?.data || {};
+
+      // Nếu backend báo còn pending -> reset để chắc chắn không dùng link cũ
+      if (latest.hasActivePayment) {
+        try {
+          await resetPremiumPending();
+        } catch {
+          // bỏ qua lỗi reset, sẽ tạo đơn mới ngay sau đó
+        }
+      }
+
+      // Tạo order mới 100%
+      const createRes = await createPremiumPayment();
+      const url = createRes?.data?.paymentUrl;
+      if (url) {
+        gotoPayment(url);
+        return;
+      }
+
+      setErr("Cannot create a fresh payment link right now. Please try again.");
+      await fetchAll();
+    } catch (e) {
+      const m = e?.response?.data?.message || e?.message || "Could not start payment.";
+      setErr(m);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Nút lớn “Upgrade/Continue” cũng chuyển sang dùng resumeOrCreate
+  const onUpgrade = async () => {
+    setErr("");
+    setActionLoading(true);
+    try {
+      if (plan === "premium") return;
+      await resumeOrCreate();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const onResetPending = async () => {
+    setActionLoading(true);
+    setErr("");
+    try {
+      await resetPremiumPending();
+      await fetchAll();
+    } catch (e) {
+      const m = e?.response?.data?.message || e?.message || "Reset failed.";
+      setErr(m);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const timeLeftText =
+    status?.timeLeft && status.timeLeft > 0
+      ? `${Math.ceil(status.timeLeft / 60)} min left`
+      : "";
 
   return (
     <div className="prx-root">
@@ -36,25 +153,36 @@ export default function Pricing() {
         <h1>Upgrade your journaling experience</h1>
         <p>Powerful AI features, clear insights and a calm, focused writing flow.</p>
 
-        {/* Billing Toggle */}
-        <div className="prx-toggle" role="tablist" aria-label="Billing period">
-          <button
-            role="tab"
-            aria-selected={billing === "monthly"}
-            className={`prx-seg ${billing === "monthly" ? "is-active" : ""}`}
-            onClick={() => setBilling("monthly")}
-          >
-            Monthly
-          </button>
-          <button
-            role="tab"
-            aria-selected={billing === "yearly"}
-            className={`prx-seg ${billing === "yearly" ? "is-active" : ""}`}
-            onClick={() => setBilling("yearly")}
-          >
-            Yearly <span className="prx-save">Save 20%</span>
-          </button>
-        </div>
+        {/* trạng thái thanh toán / lỗi */}
+        {loading ? (
+          <div className="prx-note">Loading payment status…</div>
+        ) : (
+          <>
+            {err && <div className="prx-note error">{err}</div>}
+            {plan === "premium" && (
+              <div className="prx-note success">You’re on <b>Premium</b>. Thank you! 🎉</div>
+            )}
+            {plan !== "premium" && status.hasActivePayment && !status.paymentExpired && (
+              <div className="prx-note">
+                You have a pending payment. {timeLeftText && <b>{timeLeftText}</b>}{" "}
+                <button
+                  className="prx-inline-btn"
+                  onClick={resumeOrCreate}
+                  disabled={actionLoading || loading}
+                >
+                  Continue payment
+                </button>
+                <button
+                  className="prx-inline-btn ghost"
+                  onClick={onResetPending}
+                  disabled={actionLoading || loading}
+                >
+                  Reset
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* Cards */}
@@ -64,7 +192,7 @@ export default function Pricing() {
           <header className="prx-card-head">
             <h3>Free</h3>
             <div className="prx-price">
-              <span className="prx-price-main">$0</span>
+              <span className="prx-price-main">0₫</span>
               <span className="prx-price-unit">/forever</span>
             </div>
           </header>
@@ -79,7 +207,13 @@ export default function Pricing() {
           </ul>
 
           <div className="prx-actions">
-            <a className="prx-btn ghost" href="/signup">Get started free</a>
+            <span
+              className="prx-btn ghost"
+              style={{ pointerEvents: "none", cursor: "default", opacity: 0.7 }}
+              aria-disabled="true"
+            >
+              Your current plan
+            </span>
           </div>
         </article>
 
@@ -90,10 +224,8 @@ export default function Pricing() {
           <header className="prx-card-head">
             <h3>Pro</h3>
             <div className="prx-price">
-              <span className="prx-price-main">
-                ${prices.pro.toFixed(2)}
-              </span>
-              <span className="prx-price-unit">{prices.unit}</span>
+              <span className="prx-price-main">41.000₫</span>
+              <span className="prx-price-unit">/month</span>
             </div>
           </header>
 
@@ -107,8 +239,18 @@ export default function Pricing() {
           </ul>
 
           <div className="prx-actions">
-            <a className="prx-btn primary" href="/checkout">Upgrade to Pro</a>
-            <p className="prx-fine">Cancel anytime. 14-day money-back guarantee.</p>
+            {plan === "premium" ? (
+              <a className="prx-btn primary" href="/profile">Manage</a>
+            ) : (
+              <button
+                className="prx-btn primary"
+                onClick={onUpgrade}
+                disabled={actionLoading || loading}
+              >
+                {actionLoading ? "Processing…" :
+                  status.hasActivePayment && !status.paymentExpired ? "Continue payment" : "Upgrade to Pro"}
+              </button>
+            )}
           </div>
         </article>
       </section>
@@ -126,7 +268,6 @@ export default function Pricing() {
   );
 }
 
-// eslint-disable-next-line react/prop-types
 function WhyItem({ emoji, title, text }) {
   return (
     <div className="prx-why-item">
@@ -139,10 +280,15 @@ function WhyItem({ emoji, title, text }) {
   );
 }
 
+WhyItem.propTypes = {
+  emoji: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  text: PropTypes.string.isRequired,
+};
+
 function CheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"
-      className="prx-check">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="prx-check">
       <path d="M20 7L9 18l-5-5" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" />
     </svg>
