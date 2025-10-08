@@ -1,3 +1,4 @@
+// src/components/Journal/JournalEntriesPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Journal.css";
@@ -6,12 +7,10 @@ import {
   createJournal,
   updateJournal,
   deleteJournal,
-  suggestBasic,
-  suggestAdvanced,
   analyze,
   markSynced,
-  getUsage,
 } from "../../services/journalService";
+import { getTemplates } from "../../services/templateService";
 
 const moodOptions = [
   { id: "happy", label: "😊 Happy" },
@@ -28,7 +27,7 @@ export default function JournalEntriesPage() {
 
   // pagination (client-side)
   const [page, setPage] = useState(1);
-  const [limit] = useState(9); // 3x3 card/ trang sẽ đẹp hơn
+  const [limit] = useState(9);
 
   // filter
   const [topSearch, setTopSearch] = useState("");
@@ -40,37 +39,22 @@ export default function JournalEntriesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [formTitle, setFormTitle] = useState("");
-  const [formContent, setFormContent] = useState("");
   const [formMood, setFormMood] = useState("happy");
   const [saving, setSaving] = useState(false);
 
-  // AI Suggestion (trong modal)
-  const [usage, setUsage] = useState(null);
-  const [aiTopic, setAiTopic] = useState("gratitude");
-  const [aiMood, setAiMood] = useState("happy");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiTips, setAiTips] = useState([]);
+  // template picking (chỉ dùng cho CREATE)
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [templates, setTemplates] = useState([]);           // [{id, name, imageUrl, ...}]
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
-  // Load usage (quota) một lần
-  useEffect(() => {
-    (async () => {
-      try {
-        const u = await getUsage();
-        setUsage(u);
-      } catch {
-        // intentionally ignored
-      }
-    })();
-  }, []);
-
-  // Load list từ server (lấy nhiều rồi phân trang client)
+  // Load list từ server
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        // có thể tăng limit fetch server nếu muốn
         const data = await getJournals({ page: 1, limit: 200 });
-        setEntries(data || []);
+        setEntries(Array.isArray(data) ? data : []);
       } catch (e) {
         const s = e?.response?.status;
         if (s === 401) {
@@ -84,11 +68,14 @@ export default function JournalEntriesPage() {
     })();
   }, [navigate]);
 
-  const toggleMood = (id) => {
+  const toggleMood = (id) =>
     setMoods((prev) =>
       prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
     );
-  };
+
+  // ---- NEW: tìm entry mới nhất để Continue ----
+
+  // ---------------------------------------------
 
   // filter client-side
   const filtered = useMemo(() => {
@@ -98,11 +85,9 @@ export default function JournalEntriesPage() {
     if (dateFilter === "today") {
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     } else if (dateFilter === "week") {
-      start = new Date(now);
-      start.setDate(start.getDate() - 7);
+      start = new Date(now); start.setDate(start.getDate() - 7);
     } else if (dateFilter === "month") {
-      start = new Date(now);
-      start.setMonth(start.getMonth() - 1);
+      start = new Date(now); start.setMonth(start.getMonth() - 1);
     }
     const kw = (keyword || topSearch).toLowerCase().trim();
 
@@ -110,7 +95,9 @@ export default function JournalEntriesPage() {
       const created = new Date(e.createdAt || e.date || Date.now());
       const byDate = created >= start;
       const byMood = moods.length ? moods.includes(e.mood) : true;
-      const byKw = kw ? (e.title + " " + e.content).toLowerCase().includes(kw) : true;
+      const byKw = kw
+        ? (e.title + " " + (e.content || "")).toLowerCase().includes(kw)
+        : true;
       return byDate && byMood && byKw;
     });
   }, [entries, keyword, topSearch, dateFilter, moods]);
@@ -123,34 +110,48 @@ export default function JournalEntriesPage() {
   // Tính toán phân trang
   const { pageItems, totalPages } = useMemo(() => {
     const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
-    const currentPage = Math.min(page, totalPages); // nếu đang ở page lớn hơn total sau filter -> kéo về cuối
+    const currentPage = Math.min(page, totalPages);
     const start = (currentPage - 1) * limit;
     const end = start + limit;
-    return {
-      pageItems: filtered.slice(start, end),
-      totalPages,
-    };
+    return { pageItems: filtered.slice(start, end), totalPages };
   }, [filtered, page, limit]);
 
   // mở modal
   const openModal = (entry = null) => {
     if (entry) {
+      // Quick edit
       setEditing(entry);
       setFormTitle(entry.title);
-      setFormContent(entry.content);
       setFormMood(entry.mood);
+      setUseTemplate(false);
+      setSelectedTemplateId(null);
     } else {
+      // Create
       setEditing(null);
       setFormTitle("");
-      setFormContent("");
       setFormMood("happy");
+      setUseTemplate(false);
+      setSelectedTemplateId(null);
     }
-    // reset AI box mỗi lần mở
-    setAiTopic("gratitude");
-    setAiMood("happy");
-    setAiTips([]);
     setShowModal(true);
   };
+
+  // Tải templates khi bật "Use template"
+  useEffect(() => {
+    if (!showModal || !useTemplate || editing) return;
+    (async () => {
+      try {
+        setTemplatesLoading(true);
+        const list = await getTemplates();
+        setTemplates(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error("Failed to load templates", e);
+        setTemplates([]);
+      } finally {
+        setTemplatesLoading(false);
+      }
+    })();
+  }, [showModal, useTemplate, editing]);
 
   // submit create/update
   const handleSubmit = async (e) => {
@@ -160,19 +161,42 @@ export default function JournalEntriesPage() {
       if (editing) {
         const updated = await updateJournal(editing._id, {
           title: formTitle,
-          content: formContent,
           mood: formMood,
         });
         setEntries((prev) => prev.map((x) => (x._id === editing._id ? updated : x)));
+        setShowModal(false);
       } else {
-        const created = await createJournal({
+        if (useTemplate && !selectedTemplateId) {
+          alert("Please select a template or uncheck 'Use a template'.");
+          setSaving(false);
+          return;
+        }
+        const payload = {
           title: formTitle,
-          content: formContent,
           mood: formMood,
-        });
-        setEntries((prev) => [created, ...prev]);
+          ...(useTemplate && selectedTemplateId ? { templateId: selectedTemplateId } : {}),
+        };
+        const created = await createJournal(payload);
+        const newId =
+          created?._id ||
+          created?.id ||
+          created?.data?._id ||
+          created?.data?.id ||
+          created?.journal?._id ||
+          created?.data?.journal?._id ||
+          created?.journalId ||
+          created?.data?.journalId;
+
+        if (!newId) {
+          console.error("Unexpected createJournal response:", created);
+          alert("Create journal failed: missing id from server.");
+          setSaving(false);
+          return;
+        }
+
+        setShowModal(false);
+        navigate(`/journals/${newId}/edit`);
       }
-      setShowModal(false);
     } catch (err) {
       const s = err?.response?.status;
       const m = err?.response?.data?.message || err?.message || "Failed to save.";
@@ -216,45 +240,13 @@ export default function JournalEntriesPage() {
     }
   }
 
-  // AI suggest trong modal
-  async function runSuggestInModal(premium = false) {
-    setAiLoading(true);
-    setAiTips([]);
-    try {
-      const fn = premium ? suggestAdvanced : suggestBasic;
-      const res = await fn({
-        topic: aiTopic,
-        mood: aiMood,
-        journalId: editing?._id,
-      });
-      setAiTips(res?.data?.suggestions || []);
-      try {
-        const u = await getUsage();
-        setUsage(u);
-      } catch {
-        // intentionally ignored
-      }
-    } catch (e) {
-      const s = e?.response?.status;
-      const m = e?.response?.data?.message || e?.message || "Failed.";
-      if (s === 403) alert(m || "Free plan daily limit reached.");
-      else alert(m);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  const insertTip = (text) => {
-    if (!text) return;
-    setFormContent((prev) => (prev ? prev + "\n\n" + text : text));
-  };
-
   return (
     <div className="jr-root">
       {/* HERO */}
       <section className="jr-hero">
         <h1>My Journal Entries</h1>
         <p>Look back and see how far you have come.</p>
+
         <div className="jr-search-wide">
           <input
             value={topSearch}
@@ -264,10 +256,12 @@ export default function JournalEntriesPage() {
           />
         </div>
 
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="jr-btn" onClick={() => openModal()}>
             + Create New Journal
           </button>
+          {/* NEW: Continue Writing entry gần nhất */}
+          
         </div>
       </section>
 
@@ -290,19 +284,13 @@ export default function JournalEntriesPage() {
           <div className="jr-block">
             <label className="jr-block-title">Filter by Date</label>
             <div className="jr-chips">
-              {["today", "week", "month", "custom"].map((df) => (
+              {["today", "week", "month"].map((df) => (
                 <button
                   key={df}
                   className={`jr-chip ${dateFilter === df ? "is-active" : ""}`}
                   onClick={() => setDateFilter(df)}
                 >
-                  {df === "today"
-                    ? "Today"
-                    : df === "week"
-                    ? "This Week"
-                    : df === "month"
-                    ? "This Month"
-                    : "Custom Range"}
+                  {df === "today" ? "Today" : df === "week" ? "This Week" : "This Month"}
                 </button>
               ))}
             </div>
@@ -348,7 +336,7 @@ export default function JournalEntriesPage() {
                 <div className="jr-card-meta">
                   <span className={`jr-mood ${e.mood}`}>{e.mood}</span>
                   <span style={{ marginLeft: 8, opacity: 0.7, fontSize: 12 }}>
-                    {new Date(e.createdAt || Date.now()).toLocaleString()}
+                    {new Date(e.updatedAt || e.createdAt || Date.now()).toLocaleString()}
                   </span>
                 </div>
                 <div className="jr-card-footer">
@@ -358,6 +346,9 @@ export default function JournalEntriesPage() {
               </div>
 
               <div className="jr-card-actions" style={{ display: "flex", gap: 8 }}>
+                {/* NEW: vào editor */}
+                <button onClick={() => navigate(`/journals/${e._id}/edit`)}>Continue</button>
+                {/* Quick edit trong modal */}
                 <button onClick={() => openModal(e)}>Edit</button>
                 <button onClick={() => handleDelete(e._id)}>Delete</button>
                 <button onClick={() => doMarkSynced(e._id)}>Mark Synced</button>
@@ -367,7 +358,7 @@ export default function JournalEntriesPage() {
           ))}
         </div>
 
-        {/* Pagination đẹp + hoạt động */}
+        {/* Pagination */}
         {filtered.length > 0 && (
           <div className="jr-pager" style={{ marginTop: 18 }}>
             <button
@@ -396,24 +387,18 @@ export default function JournalEntriesPage() {
             >
               Next
             </button>
-
-            {/* (tuỳ chọn) selector size */}
-            {/* <select value={limit} onChange={(e)=>setLimit(+e.target.value)}>
-              <option value={6}>6</option>
-              <option value={9}>9</option>
-              <option value={12}>12</option>
-            </select> */}
           </div>
         )}
       </section>
 
       <footer className="jr-footer">© {new Date().getFullYear()} My Journal</footer>
 
-      {/* CREATE/EDIT MODAL + AI Suggestion box */}
+      {/* CREATE / EDIT MODAL */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
           <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">{editing ? "Edit Journal" : "Create New Journal"}</h2>
+            <h2 className="modal-title">{editing ? "Quick Edit" : "Create New Journal"}</h2>
+
             <form onSubmit={handleSubmit}>
               <input
                 className="modal-input"
@@ -422,14 +407,7 @@ export default function JournalEntriesPage() {
                 placeholder="Title"
                 required
               />
-              <textarea
-                className="modal-input"
-                style={{ height: "120px", resize: "vertical" }}
-                value={formContent}
-                onChange={(e) => setFormContent(e.target.value)}
-                placeholder="Write your thoughts..."
-                required
-              />
+
               <select
                 className="modal-input"
                 value={formMood}
@@ -442,77 +420,70 @@ export default function JournalEntriesPage() {
                 ))}
               </select>
 
-              {/* AI Suggestion box trong modal */}
-              <div className="jr-ai-box" style={{ marginTop: 10 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>AI Suggestions</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {/* Toggle chọn template (chỉ khi CREATE) */}
+              {!editing && (
+                <label className="modal-check">
                   <input
-                    className="modal-input"
-                    style={{ maxWidth: 220 }}
-                    value={aiTopic}
-                    onChange={(e) => setAiTopic(e.target.value)}
-                    placeholder="Topic (e.g. gratitude)"
+                    type="checkbox"
+                    checked={useTemplate}
+                    onChange={(e) => setUseTemplate(e.target.checked)}
                   />
-                  <select
-                    className="modal-input"
-                    style={{ maxWidth: 160 }}
-                    value={aiMood}
-                    onChange={(e) => setAiMood(e.target.value)}
-                  >
-                    <option value="happy">happy</option>
-                    <option value="sad">sad</option>
-                    <option value="calm">calm</option>
-                  </select>
-                  <button
-                    type="button"
-                    className="modal-btn ghost"
-                    onClick={() => runSuggestInModal(false)}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? "Thinking..." : "Suggest (Free)"}
-                  </button>
-                  <button
-                    type="button"
-                    className="modal-btn"
-                    onClick={() => runSuggestInModal(true)}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? "Thinking..." : "Suggest+ (Premium)"}
-                  </button>
+                  <span style={{ marginLeft: 8 }}>Use a template</span>
+                </label>
+              )}
+
+              {/* Gallery template */}
+              {!editing && useTemplate && (
+                <div className="tpl-wrap">
+                  {templatesLoading ? (
+                    <div>Loading templates…</div>
+                  ) : templates.length === 0 ? (
+                    <div style={{ fontSize: 14, opacity: 0.7 }}>No templates available.</div>
+                  ) : (
+                    <div className="tpl-grid">
+                      {templates.map((t) => {
+                        const isSel = selectedTemplateId === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            className={`tpl-item ${isSel ? "is-active" : ""}`}
+                            onClick={() => setSelectedTemplateId(t.id)}
+                            title={t.name}
+                          >
+                            {t.imageUrl ? (
+                              <img
+                                src={t.imageUrl}
+                                alt={t.name}
+                                loading="lazy"
+                                onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: 110,
+                                  borderRadius: 10,
+                                  background: "#f3f4f6",
+                                  border: "1px solid #e5e7eb",
+                                }}
+                              />
+                            )}
+                            <span className="tpl-name">{t.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-
-                {usage && (
-                  <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>
-                    Plan: {usage?.data?.plan ?? "—"} • Remaining free suggests today:{" "}
-                    {usage?.data?.remaining?.suggestBasic ?? "—"}
-                  </div>
-                )}
-
-                {!!aiTips.length && (
-                  <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-                    {aiTips.map((t, i) => (
-                      <li key={i} style={{ marginBottom: 6 }}>
-                        {t}{" "}
-                        <button
-                          type="button"
-                          className="modal-btn ghost"
-                          style={{ marginLeft: 8, height: 28, padding: "0 10px" }}
-                          onClick={() => insertTip(t)}
-                        >
-                          Insert
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              )}
 
               <div className="modal-actions">
                 <button type="button" className="modal-btn ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
                 <button className="modal-btn" disabled={saving}>
-                  {saving ? "Saving..." : "Save"}
+                  {editing ? (saving ? "Saving..." : "Save") : saving ? "Continuing..." : "Continue"}
                 </button>
               </div>
             </form>

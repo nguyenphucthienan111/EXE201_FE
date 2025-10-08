@@ -36,3 +36,9 @@ export async function resetPremiumPending() {
 //   const { data } = await api.post("/payments/test-webhook", { orderCode });
 //   return data;
 // }
+/** Xác nhận trực tiếp với PayOS sau khi user quay về app */
+export async function confirmPayment(paymentId) {
+  if (!paymentId) throw new Error("Missing paymentId");
+  const { data } = await api.get(`/payments/confirm/${paymentId}`);
+  return data;
+}

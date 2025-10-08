@@ -99,3 +99,39 @@
   font-weight: 600;
   color: #333;
 }
+.tpl-category {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6d28d9;
+  background: #ede9fe;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.tpl-tabs {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 10px;
+}
+
+.tpl-tab {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tpl-tab:hover {
+  background: #ddd6fe;
+}
+
+.tpl-tab.is-active {
+  background: #7c3aed;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

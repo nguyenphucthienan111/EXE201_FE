@@ -44,7 +44,7 @@
 .jr-search-wide input:focus{ border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring); }
 
 .jr-btn{
-  display:inline-block; height: 44px; padding: 0 18px;
+  display:inline-block; height: 44px; padding: 0  18px;
   background: var(--brand); color:#fff; border-radius: 12px; font-weight: 800;
   text-decoration:none; box-shadow: 0 12px 24px rgba(134,102,224,.25);
   border: none; cursor: pointer; transition: background .2s;
@@ -166,6 +166,201 @@
   margin: 6px 0 22px;
   font-weight: 800;
 }
+.jr-root {
+  font-family: "Inter", sans-serif;
+  background: #faf9ff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.jr-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #7c3aed;
+  color: white;
+  padding: 14px 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.jr-logo {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.jr-btn {
+  background: #7c3aed;
+  color: white;
+  border: none;
+  padding: 8px auto 14px;
+  margin-left: 130px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.jr-btn:hover { background: #6d28d9; }
+.jr-btn.ghost {
+  background: transparent;
+  border: 1px solid #fff;
+}
+
+.jr-filter {
+  max-width: 1100px;
+  margin: 16px auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.jr-select, .jr-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+}
+
+.jr-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+  flex: 1;
+}
+
+.jr-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width: 768px) {
+  .jr-grid-2 { grid-template-columns: 1fr; }
+}
+
+.jr-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.jr-empty {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.jr-alert.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.jr-form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.jr-plan ul {
+  padding-left: 20px;
+  margin: 8px 0 0;
+}
+
+.jr-footer {
+  margin-top: auto;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+}
+/* Template grid */
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Template item */
+.tpl-item {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: #f9fafb;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tpl-item:hover {
+  border-color: #a78bfa; /* tím nhạt */
+  background: #f3e8ff;
+}
+
+.tpl-item.is-active {
+  border-color: #7c3aed; /* tím đậm */
+  background: #ede9fe;
+}
+
+.tpl-item img {
+  width: 90%;
+  height: 80%; /* giới hạn chiều cao */
+  object-fit: cover; /* giữ tỉ lệ, cắt gọn */
+  border-radius: 8px;
+}
+
+.tpl-name {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+}
+/* ===== Editor ===== */
+.ed-wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+.ed-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.ed-actions { display:flex; gap:8px; }
+.ed-btn { background:#7c3aed; color:#fff; border:none; padding:8px 14px; border-radius:10px; font-weight:600; cursor:pointer; }
+.ed-btn.ghost { background:#f4f4f5; color:#111827; }
+.ed-btn:disabled { opacity:.6; cursor:not-allowed; }
+.ed-alert { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; padding:10px 12px; border-radius:10px; margin:10px 0; }
+
+.ed-form { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:14px; box-shadow: 0 2px 10px rgba(0,0,0,.03); }
+.ed-input.ed-title { width:100%; font-size:22px; font-weight:800; border:1px solid #e5e7eb; border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+
+.ed-toolbar { display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px dashed #e5e7eb; margin-bottom:10px; }
+.ed-select { padding:6px 10px; border:1px solid #e5e7eb; border-radius:10px; }
+.ed-spacer { flex:1; }
+.ed-meta { font-size:12px; color:#6b7280; }
+.ed-dot { width:4px; height:4px; border-radius:999px; background:#c7c9cf; display:inline-block; margin:0 8px; }
+
+.ed-textarea { width:100%; min-height:360px; resize:vertical; border:1px solid #e5e7eb; border-radius:12px; padding:12px; line-height:1.6; font-size:15px; }
+.ed-footerbar { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+/* Template info nhỏ gọn */
+.ed-tpl {
+  display:flex; gap:12px; align-items:center;
+  background:#fafafa; border:1px solid #e5e7eb; border-radius:14px;
+  padding:10px 12px; margin-bottom:12px;
+}
+.ed-tpl-right { flex:1; min-width:0; }
+.ed-tpl-name { font-weight:700; font-size:15px; }
+.ed-tpl-desc { font-size:13px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ed-tpl-tag { display:inline-block; margin-top:6px; padding:2px 10px; border-radius:999px; font-size:12px; }
+.ed-tpl-tag.premium { background:#fde2ff; }
+.ed-tpl-tag.default { background:#e9e7ff; }
+
+/* Textarea gốc đã có trong file của bạn; chỉ cần đảm bảo có border-radius, padding đủ */
+
 
 
 /* ========== Responsive ========== */

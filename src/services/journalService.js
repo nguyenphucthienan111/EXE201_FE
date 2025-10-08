@@ -2,8 +2,8 @@
 import api from "./api";
 
 /** Create a journal (Free: max 2/day, Premium: unlimited) */
-export async function createJournal({ title, content, mood, tags = [] }) {
-  const { data } = await api.post("/journals", { title, content, mood, tags });
+export async function createJournal({ title, content, mood, tags = [], richContent, templateId }) {
+  const { data } = await api.post("/journals", { title, content, mood, tags, richContent, templateId });
   return data;
 }
 
@@ -13,7 +13,7 @@ export async function getJournals({ page = 1, limit = 10 } = {}) {
   return data;
 }
 
-/** Get one journal (optional helper) */
+/** Get one journal */
 export async function getJournal(id) {
   const { data } = await api.get(`/journals/${id}`);
   return data;
@@ -21,7 +21,7 @@ export async function getJournal(id) {
 
 /** Update a journal */
 export async function updateJournal(id, payload) {
-  // payload: { title?, content?, mood?, tags? }
+  // payload có thể gồm: { title?, content?, mood?, tags?, richContent?, templateId? }
   const { data } = await api.put(`/journals/${id}`, payload);
   return data;
 }
@@ -35,7 +35,7 @@ export async function deleteJournal(id) {
 /** AI suggestion (basic) – Free: 3/day, Premium: unlimited */
 export async function suggestBasic({ mood, topic, journalId }) {
   const { data } = await api.post("/journals/suggest-basic", { mood, topic, journalId });
-  return data; // { success, data: { suggestions: [...] } }
+  return data;
 }
 
 /** AI suggestion (advanced) – Premium */
@@ -64,6 +64,7 @@ export async function markSynced(id) {
 
 /** Dashboard (premium) */
 export async function getDashboard({ period = "month" } = {}) {
+  // period: week | month | quarter | year
   const { data } = await api.get("/journals/dashboard", { params: { period } });
   return data;
 }
@@ -78,4 +79,16 @@ export async function improvementPlan({ focusAreas = ["anxiety"], duration = 7 }
 export async function getUsage() {
   const { data } = await api.get("/journals/usage");
   return data;
+}
+
+/** Print journal (premium) */
+export async function printJournal(id, { paperSize = "A4", printQuality = "Standard", colorOptions = "Color", copies = 1 }) {
+  const { data } = await api.post(`/journals/${id}/print`, { paperSize, printQuality, colorOptions, copies });
+  return data;
+}
+
+/** Download print-ready PDF */
+export async function downloadJournalPdf(id) {
+  const { data } = await api.get(`/journals/${id}/print/download`, { responseType: "blob" });
+  return data; // trả về blob để lưu file PDF
 }

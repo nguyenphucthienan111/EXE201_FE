@@ -1,0 +1,177 @@
+/* ===== Global Theme (Purple Modern) ===== */
+:root {
+  --brand: #7c3aed;        /* violet-600 */
+  --brand-2: #a855f7;      /* violet-500 */
+  --bg: #f5f3ff;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --ink: #1f2937;
+  --ink-2: #111827;
+  --danger: #ef4444;
+  --radius: 18px;
+  --ring: 0 8px 24px rgba(124, 58, 237, 0.15);
+}
+
+body {
+  background: var(--bg);
+  font-family: "Inter", sans-serif;
+  color: var(--ink);
+}
+
+/* ===== Root & Header ===== */
+.ad-root { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+.ad-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px;
+}
+.ad-header h1 {
+  font-size: 26px; font-weight: 800;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.ad-actions { display: flex; gap: 12px; }
+
+/* ===== Buttons ===== */
+.ad-btn {
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: white; font-weight: 600;
+  border: none; border-radius: var(--radius);
+  padding: 10px 16px; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--ring);
+}
+.ad-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.ad-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ad-btn.danger { background: var(--danger); }
+
+/* ===== Cards ===== */
+.ad-grid {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(6, 1fr);
+  margin-bottom: 24px;
+}
+@media (max-width: 1100px){ .ad-grid{ grid-template-columns: repeat(3, 1fr);} }
+@media (max-width: 640px){ .ad-grid{ grid-template-columns: repeat(2, 1fr);} }
+
+.ad-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--ring);
+  transition: 0.2s;
+}
+.ad-card:hover { transform: translateY(-3px); }
+.ad-card-label { font-size: 13px; color: var(--muted); }
+.ad-card-value { font-size: 22px; font-weight: 800; color: var(--ink-2); }
+
+/* ===== Panels ===== */
+.ad-panel {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--ring);
+}
+.ad-panel-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.ad-panel-head h2 {
+  font-size: 18px; font-weight: 700;
+  color: var(--brand);
+}
+.ad-row { display: flex; gap: 12px; }
+
+/* ===== Select ===== */
+.ad-select {
+  border: 1px solid #e5e7eb; border-radius: var(--radius);
+  padding: 8px 12px; font-size: 14px;
+  background: white;
+}
+
+/* ===== Revenue Grid ===== */
+.ad-revenue-grid {
+  display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 900px){ .ad-revenue-grid{ grid-template-columns: repeat(2, 1fr);} }
+@media (max-width: 520px){ .ad-revenue-grid{ grid-template-columns: 1fr;} }
+
+.ad-rev-item {
+  background: linear-gradient(180deg, #faf5ff, #ffffff);
+  border: 1px solid #e9d5ff;
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.ad-rev-key { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.ad-rev-val { font-size: 20px; font-weight: 700; color: var(--brand); }
+
+/* Sparkline container */
+.ad-spark {
+  width: 100%; height: 50px;
+}
+
+/* ===== Table ===== */
+.ad-table-wrap {
+  overflow: auto;
+  border-radius: var(--radius);
+  border: 1px solid #e5e7eb;
+}
+.ad-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ad-table thead th {
+  background: #ede9fe; color: var(--brand);
+  text-align: left; padding: 12px; font-size: 13px;
+}
+.ad-table tbody td {
+  padding: 12px; border-top: 1px solid #f1f5f9;
+}
+/* ===== Shimmer Loading ===== */
+.ad-skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.ad-skel-card {
+  height: 100px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #ede9fe 25%, #f3f4f6 50%, #ede9fe 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.ad-skel-panel {
+  height: 240px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #f5f3ff 25%, #f9fafb 50%, #f5f3ff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.ad-skel-row {
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ede9fe 25%, #f3f4f6 50%, #ede9fe 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+
+/* ===== Health ===== */
+.ad-health {
+  display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 900px){ .ad-health{ grid-template-columns: repeat(2, 1fr);} }
+@media (max-width: 520px){ .ad-health{ grid-template-columns: 1fr;} }
+
+.ad-empty { text-align: center; color: var(--muted); padding: 14px; }

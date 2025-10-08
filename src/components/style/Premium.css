@@ -13,29 +13,10 @@
 .prx-root{background:var(--bg); color:var(--ink);}
 
 /* ---------- HERO ---------- */
-.prx-hero{max-width:1000px;margin:56px auto 18px;text-align:center;padding:0 16px}
-.prx-chip{
-  display:inline-flex;align-items:center;justify-content:center;
-  padding:6px 12px;border-radius:999px;background:#efe9ff;color:#5b39d4;
-  font-weight:700;font-size:.8rem;margin-bottom:10px;
-}
+.prx-hero{max-width:1000px;margin:10px auto 12px;text-align:center;padding:0 16px}
+.prx-chip{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;background:#efe9ff;color:var(--brand);font-weight:700;font-size:.8rem;margin-bottom:10px}
 .prx-hero h1{margin:0 0 8px;font-size:36px;letter-spacing:.2px}
 .prx-hero p{margin:0 0 18px;color:var(--muted)}
-
-/* ---------- TOGGLE ---------- */
-.prx-toggle{
-  display:inline-flex;border:1px solid var(--line);border-radius:12px;
-  background:#faf7ff;box-shadow:var(--shadow);gap:6px;padding:6px;
-}
-.prx-seg{
-  padding:8px 14px;border-radius:8px;border:0;background:transparent;cursor:pointer;
-  font-weight:700;color:#6c5a92;
-}
-.prx-seg.is-active{
-  background:#fff;color:#4a2fd1;box-shadow:0 4px 14px rgba(74,47,209,.15);
-}
-.prx-save{margin-left:8px;background:#ffe3ec;color:#d12f7b;
-  padding:2px 6px;border-radius:6px;font-size:.7rem;font-weight:800}
 
 /* ---------- GRID ---------- */
 .prx-grid{
@@ -43,123 +24,188 @@
   display:grid;grid-template-columns:1fr 1fr;gap:24px;
 }
 
-/* ---------- CARD BASE ---------- */
+/* ---------- CARD BASE (đồng chiều cao & đẩy button xuống đáy) ---------- */
 .prx-card{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden;
   transition:transform .15s ease, box-shadow .2s ease;
+  display:flex;flex-direction:column; /* để .prx-actions đẩy xuống dưới */
+  min-height: 520px;                  /* chiều cao đồng bộ 2 card */
 }
-.prx-card:hover{ transform: translateY(-3px); box-shadow:0 16px 36px rgba(26,17,48,.10); }
+.prx-card:hover{ transform: translateY(-3px); box-shadow:0 16px 36px rgba(26,17,48,.10) }
 
 .prx-card-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
-.prx-card-head h3{margin:0;font-size:20px;letter-spacing:.2px; font-weight:800; color:#4a2fd1}
-.prx-price{
-  display:flex;align-items:baseline;gap:6px;white-space:nowrap;   /* tránh che/sụp dòng */
-}
+.prx-card-head h3{margin:0;font-size:20px;letter-spacing:.2px;font-weight:800;color:var(--brand)}
+.prx-price{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
 .prx-price-main{font-size:34px;font-weight:900;color:#2c2341;line-height:1}
 .prx-price-unit{color:var(--muted);font-size:.95rem}
 
 /* danh sách tính năng */
 .prx-list{list-style:none;padding:10px 0 0;margin:0;display:grid;gap:12px}
 .prx-list li{display:flex;gap:10px;align-items:flex-start;color:#40365a; line-height:1.35}
-.prx-check{color:#4a2fd1;flex:0 0 auto;margin-top:2px}
+.prx-check{color:var(--brand);flex:0 0 auto;margin-top:2px}
 
-/* ---------- PRO CARD (highlight) ---------- */
+/* ---------- PRO CARD (viền gradient, badge không che) ---------- */
 .prx-card.pro{
   border-color:transparent;
   background:
     linear-gradient(#fff,#fff) padding-box,
-    linear-gradient(135deg,#7c58d9 0%, #b48ad7 50%, #71d7dd 100%) border-box;
+    linear-gradient(135deg,var(--brand) 0%, var(--brand-2) 60%, #71d7dd 100%) border-box;
   border:1px solid transparent;
 }
-.prx-card.pro .prx-price-main{ color:#2a2050; }
-.prx-card.pro .prx-card-head{ padding-top:8px; padding-right:124px; } /* chừa chỗ cho badge */
-
-/* Badge: không che giá, cố định góc phải */
+.prx-card.pro .prx-card-head{ padding-top:8px; padding-right:120px }
 .prx-badge{
   position:absolute; top:20px; right:18px;
-  background:#4a2fd1; color:#fff; font-weight:800; font-size:.72rem;
-  padding:6px 10px; border-radius:999px; letter-spacing:.2px;
-  box-shadow:var(--shadow); pointer-events:none;
+  background:var(--brand); color:#fff; font-weight:800; font-size:.72rem;
+  padding:6px 10px; border-radius:999px; letter-spacing:.2px; box-shadow:var(--shadow);
+  pointer-events:none;
 }
 
-/* ---------- ACTIONS ---------- */
-.prx-actions{margin-top:18px}
+/* ---------- ACTIONS (đẩy xuống đáy, hết khoảng trắng thừa) ---------- */
+.prx-actions{margin-top:auto}        /* đây là điểm loại bỏ khoảng trắng */
 .prx-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:12px 16px;border-radius:10px;text-decoration:none;font-weight:800;
   transition:transform .05s ease, box-shadow .2s ease;
 }
+
+/* trạng thái/biến thể nút */
 .prx-btn.primary{
-  background:#4a2fd1;color:#fff;box-shadow:0 10px 22px rgba(74,47,209,.25)
+  background:var(--brand); color:#fff; box-shadow:0 10px 22px rgba(111,83,217,.25);
 }
 .prx-btn.primary:hover{transform:translateY(-1px)}
-.prx-btn.ghost{background:#fff;border:1px solid var(--line);color:#4a2fd1}
+.prx-btn.ghost{background:#fff;border:1px solid var(--line);color:var(--brand)}
 .prx-btn.ghost:hover{box-shadow:0 10px 22px rgba(26,17,48,.06)}
-.prx-fine{color:var(--muted);font-size:.85rem;margin-top:10px}
+
+/* ✅ nút “Your current plan” đồng bộ một màu ở cả Free & Pro */
+.prx-btn.current{
+  background: var(--brand);          /* dùng tím chủ đạo */
+  color:#fff;
+  border: 1px solid transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Giá khi đã premium: gạch giá cũ + hiện 0đ */
+.prx-price-strike{text-decoration:line-through;opacity:.6;margin-right:8px}
+.prx-price-now{font-weight:800}
+
+/* Nếu bạn vẫn dùng cột actions riêng ở Pro */
+.prx-actions-col{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.prx-expire{font-size:12px;color:#6b7280}
 
 /* ---------- WHY US ---------- */
 .prx-why{max-width:1000px;margin:0 auto 80px;padding:0 16px}
-.prx-why h2{margin:0 0 14px;font-size:22px;color:#4a2fd1}
+.prx-why h2{margin:0 0 14px;font-size:22px;color:var(--brand)}
 .prx-why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .prx-why-item{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fcfbff}
-.prx-why-emoji{width:36px;height:36px;border-radius:10px;background:#f2ecff;
-  display:grid;place-items:center;margin-bottom:8px;font-size:18px}
+.prx-why-emoji{width:36px;height:36px;border-radius:10px;background:#f2ecff;display:grid;place-items:center;margin-bottom:8px;font-size:18px}
 .prx-why-item h4{margin:0 0 4px}
 .prx-why-item p{margin:0;color:var(--muted)}
-/* Nút nhỏ trong thanh thông báo */
-.prx-inline-btn {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 4px 10px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #f7f7f7;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
 
-.prx-inline-btn:hover {
-  background-color: #eaeaea;
-  border-color: #aaa;
-}
-
-/* Biến thể ghost */
-.prx-inline-btn.ghost {
-  background-color: transparent;
-  border-color: #ddd;
-  color: #555;
-}
-
-.prx-inline-btn.ghost:hover {
-  background-color: #f5f5f5;
-}
-.prx-inline-btn {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 4px 10px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  background-color: #f7f7f7;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-.prx-inline-btn:hover { background-color: #eee; border-color: #bdbdbd; }
-.prx-inline-btn:disabled { opacity: .5; cursor: not-allowed; }
-.prx-inline-btn.ghost { background: transparent; border-color: #e0e0e0; color: #555; }
-.prx-inline-btn.ghost:hover { background: #f6f6f6; }
-
+/* Nút nhỏ trong thanh thông báo pending */
+.prx-inline-btn{display:inline-block;margin-left:6px;padding:4px 10px;font-size:14px;font-weight:600;border:1px solid #d0d0d0;border-radius:6px;background:#f7f7f7;color:#333;cursor:pointer;transition:.2s}
+.prx-inline-btn:hover{background:#eee;border-color:#bdbdbd}
+.prx-inline-btn:disabled{opacity:.5;cursor:not-allowed}
+.prx-inline-btn.ghost{background:transparent;border-color:#e0e0e0;color:#555}
+.prx-inline-btn.ghost:hover{background:#f6f6f6}
 
 /* ---------- RESPONSIVE ---------- */
-@media (max-width: 900px){
-  .prx-grid{grid-template-columns:1fr}
-  .prx-why-grid{grid-template-columns:1fr}
-  .prx-card.pro .prx-card-head{padding-right:0;} /* mobile: không cần chừa nhiều */
-  .prx-badge{right:12px;}
+/* ======= PREMIUM PAGE – OVERRIDES ======= */
+
+/* Trang full-height để không chừa khoảng trắng dư */
+.prx-page {                        /* Nếu bạn bọc trang bằng <main class="prx-page"> */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
+.prx-content {                     /* bọc phần nội dung chính */
+  flex: 1;
+}
+
+/* Giảm khoảng cách chung */
+.prx-hero{
+  max-width: 860px;
+  margin: 12px auto 8px;           /* trước: 10px auto 12px */
+  padding: 0 14px;
+}
+.prx-grid{
+  max-width: 920px;                /* trước: 1000px */
+  margin: 12px auto 24px;          /* trước: 24px auto 56px */
+  padding: 0 14px;
+  gap: 18px;                       /* trước: 24px */
+}
+.prx-why{
+  max-width: 920px;
+  margin: 0 auto 28px;             /* trước: 80px */
+  padding: 0 14px;
+}
+
+/* Thu nhỏ card + đồng bộ chiều cao hợp lý */
+.prx-card{
+  padding: 20px;                   /* trước: 24px */
+  min-height: 420px;               /* trước: 520px (dài quá) */
+  display: flex;
+  flex-direction: column;          /* để .prx-actions đẩy xuống đáy */
+}
+.prx-card:hover{ transform: translateY(-2px); }
+
+/* Header card */
+.prx-card-head{
+  margin-bottom: 10px;             /* trước: 14px */
+}
+.prx-card-head h3{
+  font-size: 18px;                 /* trước: 20px */
+}
+
+/* Giá nhỏ lại để gọn card */
+.prx-price-main{
+  font-size: 28px;                 /* trước: 34px */
+  line-height: 1;
+}
+.prx-price-unit{
+  font-size: .9rem;
+}
+
+/* Danh sách tính năng gọn hơn */
+.prx-list{
+  padding-top: 6px;                /* trước: 10px */
+  gap: 10px;                       /* trước: 12px */
+}
+.prx-list li{ line-height: 1.3; }
+
+/* PRO card – chừa badge nhưng đừng làm “đội” chiều ngang */
+.prx-card.pro .prx-card-head{
+  padding-top: 4px;
+  padding-right: 96px;             /* trước: 120px */
+}
+.prx-badge{ top: 16px; right: 14px; }
+
+/* Đẩy nhóm nút xuống đáy (hết khoảng trắng vô nghĩa trong card) */
+.prx-actions{ margin-top: auto; }
+
+/* Nút “Your current plan” – đồng 1 màu */
+.prx-btn.current{
+  background: var(--brand);
+  color: #fff;
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+
+/* Giá gạch + 0đ vẫn hiển thị rõ nhưng gọn */
+.prx-price-strike{ opacity: .6; margin-right: 6px; text-decoration: line-through; }
+.prx-price-now{ font-weight: 800; }
+
+/* Giảm thêm khoảng trắng ở sát footer nếu có */
+footer, .site-footer { padding-top: 8px; padding-bottom: 8px; }
+header, .site-header { margin: 0; }
+
+
+/* Mobile tinh gọn hơn nữa */
+@media (max-width: 900px){
+  .prx-grid{ max-width: 100%; gap: 14px; margin: 8px auto 18px; }
+  .prx-card{ min-height: auto; }
+  .prx-card.pro .prx-card-head{ padding-right: 0; }
+  .prx-badge{ right: 10px; top: 12px; }
+}
+

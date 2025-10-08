@@ -1,3 +1,4 @@
+// src/components/Pricing.jsx
 import { useEffect, useState, useRef } from "react";
 import "../style/Premium.css";
 import {
@@ -29,7 +30,10 @@ export default function Pricing() {
   const [actionLoading, setActionLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [plan, setPlan] = useState("free"); // 'free' | 'premium'
+  // 'free' | 'premium'
+  const [plan, setPlan] = useState("free");
+
+  // pending info từ BE
   const [status, setStatus] = useState({
     hasActivePayment: false,
     paymentExpired: true,
@@ -39,8 +43,7 @@ export default function Pricing() {
 
   const pollRef = useRef(null);
 
-  // helpers
-  const fetchAll = async () => {
+  async function fetchAll() {
     setErr("");
     try {
       setLoading(true);
@@ -49,15 +52,24 @@ export default function Pricing() {
         getPremiumPaymentStatus().catch(() => null),
       ]);
 
-      if (planRes?.data?.plan) setPlan(planRes.data.plan);
+      // BE có thể trả data.currentPlan hoặc data.plan
+      const nextPlan =
+        planRes?.data?.currentPlan ||
+        planRes?.data?.plan ||
+        planRes?.currentPlan ||
+        planRes?.plan ||
+        "free";
+      setPlan(nextPlan);
+
       if (sttRes?.data) setStatus((s) => ({ ...s, ...sttRes.data }));
     } catch (e) {
-      const m = e?.response?.data?.message || e?.message || "Failed to load payment status.";
+      const m =
+        e?.response?.data?.message || e?.message || "Failed to load payment status.";
       setErr(m);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
     fetchAll();
@@ -67,38 +79,54 @@ export default function Pricing() {
       try {
         const sttRes = await getPremiumPaymentStatus();
         if (sttRes?.data) setStatus((s) => ({ ...s, ...sttRes.data }));
-      } catch { /* empty */ }
-    }, 8000); // 8s
+      } catch {
+        /* ignore */
+      }
+    }, 8000);
 
-    return () => pollRef.current && clearInterval(pollRef.current);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
   const gotoPayment = (url) => {
-    if (!url) return;
-    window.location.href = url; // redirect sang cổng thanh toán
+    if (url) window.location.href = url; // redirect sang cổng thanh toán
   };
 
-  // 🔑 Luôn đảm bảo mở đơn MỚI, tránh dùng order cũ gây lỗi ở PayOS
+  // Luôn tạo đơn mới và LƯU paymentId+orderCode để trang /payment/success xác nhận
   const resumeOrCreate = async () => {
     setErr("");
     setActionLoading(true);
     try {
-      // Lấy trạng thái mới nhất
+      // Nếu đang có pending link hợp lệ -> reset để chắc chắn tạo link mới
       const sttRes = await getPremiumPaymentStatus().catch(() => null);
       const latest = sttRes?.data || {};
-
-      // Nếu backend báo còn pending -> reset để chắc chắn không dùng link cũ
-      if (latest.hasActivePayment) {
+      if (latest.hasActivePayment && !latest.paymentExpired) {
         try {
           await resetPremiumPending();
         } catch {
-          // bỏ qua lỗi reset, sẽ tạo đơn mới ngay sau đó
+          /* ignore lỗi reset */
         }
       }
 
-      // Tạo order mới 100%
+      // Tạo link mới
       const createRes = await createPremiumPayment();
       const url = createRes?.data?.paymentUrl;
+      const paymentId = createRes?.data?.paymentId;
+      const orderCode = createRes?.data?.orderCode;
+
+      // LƯU để /payment/success xác nhận qua /payments/confirm/:paymentId
+      if (paymentId || orderCode) {
+        localStorage.setItem(
+          "pendingPayment",
+          JSON.stringify({
+            paymentId: paymentId || "",
+            orderCode: orderCode || "",
+            ts: Date.now(),
+          })
+        );
+      }
+
       if (url) {
         gotoPayment(url);
         return;
@@ -107,14 +135,14 @@ export default function Pricing() {
       setErr("Cannot create a fresh payment link right now. Please try again.");
       await fetchAll();
     } catch (e) {
-      const m = e?.response?.data?.message || e?.message || "Could not start payment.";
+      const m =
+        e?.response?.data?.message || e?.message || "Could not start payment.";
       setErr(m);
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Nút lớn “Upgrade/Continue” cũng chuyển sang dùng resumeOrCreate
   const onUpgrade = async () => {
     setErr("");
     setActionLoading(true);
@@ -127,8 +155,8 @@ export default function Pricing() {
   };
 
   const onResetPending = async () => {
-    setActionLoading(true);
     setErr("");
+    setActionLoading(true);
     try {
       await resetPremiumPending();
       await fetchAll();
@@ -153,14 +181,15 @@ export default function Pricing() {
         <h1>Upgrade your journaling experience</h1>
         <p>Powerful AI features, clear insights and a calm, focused writing flow.</p>
 
-        {/* trạng thái thanh toán / lỗi */}
         {loading ? (
           <div className="prx-note">Loading payment status…</div>
         ) : (
           <>
             {err && <div className="prx-note error">{err}</div>}
             {plan === "premium" && (
-              <div className="prx-note success">You’re on <b>Premium</b>. Thank you! 🎉</div>
+              <div className="prx-note success">
+                You’re on <b>Premium</b>. Thank you! 🎉
+              </div>
             )}
             {plan !== "premium" && status.hasActivePayment && !status.paymentExpired && (
               <div className="prx-note">
@@ -207,13 +236,15 @@ export default function Pricing() {
           </ul>
 
           <div className="prx-actions">
-            <span
-              className="prx-btn ghost"
-              style={{ pointerEvents: "none", cursor: "default", opacity: 0.7 }}
-              aria-disabled="true"
-            >
-              Your current plan
-            </span>
+            {plan === "free" ? (
+              <span
+                className="prx-btn ghost"
+                style={{ pointerEvents: "none", cursor: "default", opacity: 0.7 }}
+                aria-disabled="true"
+              >
+                Your current plan
+              </span>
+            ) : null}
           </div>
         </article>
 
@@ -224,8 +255,20 @@ export default function Pricing() {
           <header className="prx-card-head">
             <h3>Pro</h3>
             <div className="prx-price">
-              <span className="prx-price-main">41.000₫</span>
-              <span className="prx-price-unit">/month</span>
+              {plan === "premium" ? (
+                <>
+                  <span className="prx-price-main">
+                    <span className="prx-price-strike">41.000₫</span>
+                    <span className="prx-price-now">0₫</span>
+                  </span>
+                  <span className="prx-price-unit">/month</span>
+                </>
+              ) : (
+                <>
+                  <span className="prx-price-main">41.000₫</span>
+                  <span className="prx-price-unit">/month</span>
+                </>
+              )}
             </div>
           </header>
 
@@ -240,15 +283,27 @@ export default function Pricing() {
 
           <div className="prx-actions">
             {plan === "premium" ? (
-              <a className="prx-btn primary" href="/profile">Manage</a>
+              <div className="prx-actions-col">
+                <span
+                  className="prx-btn primary current"
+                  style={{ pointerEvents: "none", cursor: "default" }}
+                  aria-disabled="true"
+                >
+                  Your current plan
+                </span>
+                {/* Nếu muốn hiển thị ngày hết hạn, thêm field từ BE và render ở đây */}
+              </div>
             ) : (
               <button
                 className="prx-btn primary"
                 onClick={onUpgrade}
                 disabled={actionLoading || loading}
               >
-                {actionLoading ? "Processing…" :
-                  status.hasActivePayment && !status.paymentExpired ? "Continue payment" : "Upgrade to Pro"}
+                {actionLoading
+                  ? "Processing…"
+                  : status.hasActivePayment && !status.paymentExpired
+                  ? "Continue payment"
+                  : "Upgrade to Pro"}
               </button>
             )}
           </div>

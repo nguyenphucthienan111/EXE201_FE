@@ -3,6 +3,24 @@ import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
 import { login, register, loginWithGoogle } from "../../services/authService";
 
+function decodeJwtRole(token) {
+  try {
+    const payloadPart = token?.split(".")[1];
+    if (!payloadPart) return null;
+    const json = JSON.parse(atob(payloadPart));
+    if (typeof json?.role === "string") return String(json.role).toLowerCase();
+    if (Array.isArray(json?.roles)) {
+      return json.roles.map((r) => String(r).toLowerCase()).includes("admin")
+        ? "admin"
+        : null;
+    }
+    if (json?.isAdmin === true) return "admin";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const LoginPage = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -57,14 +75,12 @@ const LoginPage = () => {
         "Registration successful. Please check your email for the verification code.";
       setRegisterSuccess(msg);
 
-      // Lưu email để verify
       localStorage.setItem("pending_verify_email", regEmail);
 
       setRegEmail("");
       setRegPassword("");
       setRegConfirm("");
 
-      // Chuyển sang trang verify
       setTimeout(() => {
         navigate(`/verify?email=${encodeURIComponent(regEmail)}`);
       }, 800);
@@ -95,17 +111,56 @@ const LoginPage = () => {
       setLoginLoading(true);
       const data = await login({ email: loginEmail, password: loginPassword });
 
-      const token = data?.accessToken || data?.token;
-      const refresh = data?.refreshToken;
-      if (token) localStorage.setItem("access_token", token);
+      // Chuẩn hóa dữ liệu backend
+      const token =
+        data?.token || data?.accessToken || data?.data?.token || data?.data?.accessToken;
+      const refresh = data?.refreshToken || data?.data?.refreshToken;
+      const userObj = data?.user || data?.data?.user || {};
+
+      // Xác định role chắc ăn
+      let role = "user";
+      if (userObj?.role) {
+        role = String(userObj.role).toLowerCase();
+      } else if (data?.role) {
+        role = String(data.role).toLowerCase();
+      } else if (data?.data?.role) {
+        role = String(data.data.role).toLowerCase();
+      } else if (Array.isArray(userObj?.roles)) {
+        role = userObj.roles.map((r) => String(r).toLowerCase()).includes("admin")
+          ? "admin"
+          : "user";
+      } else if (userObj?.isAdmin) {
+        role = "admin";
+      } else if (token) {
+        // Fallback: đọc role từ JWT nếu backend chỉ nhét role trong token
+        const jwtRole = decodeJwtRole(token);
+        if (jwtRole) role = jwtRole;
+      }
+
+      console.log("DEBUG login -> role:", role, "user:", userObj);
+
+      if (token) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("access_token", token); // lưu thêm cho chắc
+      }
       if (refresh) localStorage.setItem("refresh_token", refresh);
-      if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("role", role);
+      if (Object.keys(userObj).length > 0) {
+        localStorage.setItem("user", JSON.stringify(userObj));
+      }
 
       setLoginSuccess("Login successful!");
       setLoginEmail("");
       setLoginPassword("");
 
-      setTimeout(() => navigate("/"), 600);
+      // Điều hướng theo role
+      setTimeout(() => {
+        if (role === "admin") {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true }); // về trang chủ (tránh /home nếu không có route)
+        }
+      }, 400);
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -218,7 +273,9 @@ const LoginPage = () => {
 
             <div className="login-notification-area">
               {registerError && <div className="login-token-notice login-error">{registerError}</div>}
-              {registerSuccess && <div className="login-token-notice login-success">{registerSuccess}</div>}
+              {registerSuccess && (
+                <div className="login-token-notice login-success">{registerSuccess}</div>
+              )}
             </div>
           </form>
         </div>
@@ -228,7 +285,11 @@ const LoginPage = () => {
           <div className="login-toggle-panel login-toggle-left">
             <h1>Hello, Welcome!</h1>
             <p>Don&apos;t have an account?</p>
-            <button className="login-btn register-btn" type="button" onClick={handleRegisterClick}>
+            <button
+              className="login-btn register-btn"
+              type="button"
+              onClick={handleRegisterClick}
+            >
               Register
             </button>
           </div>

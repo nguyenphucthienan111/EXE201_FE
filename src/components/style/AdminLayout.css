@@ -1,0 +1,58 @@
+/* src/components/Admin/style/AdminLayout.css */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;  /* sidebar 240px + nội dung còn lại */
+  min-height: 100vh;
+  background: #f8f5ff; /* tím rất nhạt */
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, #6d28d9, #7c3aed);
+  color: #fff;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-brand {
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.admin-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-nav-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #f5ecff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.admin-nav-item.active {
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 6px 18px rgba(17, 12, 46, 0.12);
+}
+
+.admin-logout {
+  margin-top: auto;
+  background: #ef4444;
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-main {
+  /* QUAN TRỌNG: không fixed/absolute; để chiếm cột thứ 2 của grid */
+  background: #ffffff;
+  padding: 24px;
+  overflow: auto;
+}
