@@ -19,6 +19,7 @@ export default function AdminLayout() {
           >
             📊 Dashboard
           </NavLink>
+
           <NavLink
             to="/admin/templates"
             className={({ isActive }) =>
@@ -26,6 +27,16 @@ export default function AdminLayout() {
             }
           >
             📝 Templates
+          </NavLink>
+
+          {/* 👇 Thêm Admin Reviews vào menu */}
+          <NavLink
+            to="/admin/reviews"
+            className={({ isActive }) =>
+              "admin-nav-item" + (isActive ? " active" : "")
+            }
+          >
+            ⭐ Reviews
           </NavLink>
         </nav>
 

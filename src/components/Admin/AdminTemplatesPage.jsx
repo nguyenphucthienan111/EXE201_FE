@@ -3,6 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import {
   uploadAdminTemplate,
   getAdminTemplates,
+  deleteAdminTemplate,
+  toggleAdminTemplateStatus,
 } from "../../services/adminTemplateService";
 import "../style/AdminTemplate.css";
 
@@ -39,16 +41,9 @@ function toAbsoluteUrl(maybeUrl, HOST) {
   if (!maybeUrl) return null;
   if (typeof maybeUrl !== "string") return null;
 
-  // Đã là absolute URL
   if (/^https?:\/\//i.test(maybeUrl)) return maybeUrl;
-
-  // Là blob/file object URL
   if (/^blob:/.test(maybeUrl)) return maybeUrl;
-
-  // Đường dẫn bắt đầu bằng "/"
   if (maybeUrl.startsWith("/")) return HOST + maybeUrl;
-
-  // Chỉ là filename (vd: "1.jpg") → thử ghép thẳng theo HOST
   return HOST + "/" + maybeUrl;
 }
 
@@ -68,7 +63,6 @@ export default function AdminTemplatesPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Lấy host từ VITE_API_URL (vd http://localhost:3000/api → host http://localhost:3000)
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
   const HOST = useMemo(() => API_BASE.replace(/\/api\/?$/, ""), [API_BASE]);
 
@@ -118,6 +112,27 @@ export default function AdminTemplatesPage() {
       await loadTemplates();
     } catch (e) {
       setError(e?.response?.data?.message || e?.message || "Upload failed");
+    }
+  }
+
+  async function handleDelete(templateId) {
+    if (!window.confirm("Are you sure you want to delete this template?")) return;
+    try {
+      await deleteAdminTemplate(templateId);
+      setSuccess("Template deleted successfully!");
+      await loadTemplates();
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.message || "Delete failed");
+    }
+  }
+
+  async function handleToggle(templateId) {
+    try {
+      await toggleAdminTemplateStatus(templateId);
+      setSuccess("Template status updated!");
+      await loadTemplates();
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.message || "Toggle failed");
     }
   }
 
@@ -204,10 +219,12 @@ export default function AdminTemplatesPage() {
                 (tpl.category || "default").toString().toLowerCase();
 
               return (
-                <div key={tpl._id || tpl.id || i} className="template-card"
+                <div
+                  key={tpl._id || tpl.id || i}
+                  className="template-card"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "88px 1fr",
+                    gridTemplateColumns: "88px 1fr auto",
                     gap: 14,
                     alignItems: "center",
                   }}
@@ -266,6 +283,34 @@ export default function AdminTemplatesPage() {
                     >
                       {cat}
                     </small>
+                    <div style={{ marginTop: 6 }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: tpl.isActive ? "green" : "red",
+                        }}
+                      >
+                        {tpl.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      className="ad-btn"
+                      style={{ background: "#f87171" }}
+                      onClick={() => handleDelete(tpl._id || tpl.id)}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className="ad-btn"
+                      style={{ background: "#60a5fa" }}
+                      onClick={() => handleToggle(tpl._id || tpl.id)}
+                    >
+                      Toggle
+                    </button>
                   </div>
                 </div>
               );

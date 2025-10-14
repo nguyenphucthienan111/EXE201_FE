@@ -104,15 +104,54 @@
 .jr-mood.sad{   background:#eef3ff; }
 .jr-mood.calm{  background:#eefbf3; }
 
-.jr-card-footer{ display:flex; align-items:center; gap:8px; color:#7a748a; font-size:13px; padding: 0 16px 12px; }
-.jr-avatar{ width:26px; height:26px; border-radius:50%; background:#e7e1ff; }
 
-.jr-card-actions{ display:flex; gap:8px; padding: 0 16px 16px; }
-.jr-card-actions button{
-  height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
-  background: #fff; color: #4335a7; font-weight: 700; cursor: pointer;
+.jr-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #7a748a;
+  font-size: 13px;
+  padding: 0 16px 12px;
+  flex-wrap: wrap;
+  min-height: 32px;
 }
-.jr-card-actions button:hover{ background:#f5f2ff; }
+.jr-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e7e1ff;
+  flex-shrink: 0;
+}
+
+
+.jr-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 16px 16px;
+  justify-content: flex-start;
+}
+.jr-card-actions button {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: #4335a7;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 4px;
+  flex: 1 1 120px;
+  min-width: 110px;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.jr-card-actions button:hover {
+  background: #f5f2ff;
+  border-color: #cdb6f2;
+  box-shadow: 0 2px 8px rgba(124,58,237,.07);
+}
 
 /* Empty state */
 .jr-empty{
@@ -361,8 +400,168 @@
 
 /* Textarea gốc đã có trong file của bạn; chỉ cần đảm bảo có border-radius, padding đủ */
 
+.ql-editor {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.ql-toolbar.ql-snow {
+  border-radius: 10px 10px 0 0;
+}
+.ql-container.ql-snow {
+  border-radius: 0 0 10px 10px;
+}
+
+/* === Widen editor card so toolbar fits one line === */
+.ed-wrap.wide {
+  /* tăng chiều rộng tối đa của trang editor */
+  max-width: 1400px;         /* bạn có thể tăng lên 1520/1600 nếu muốn */
+  margin: 0 auto;
+}
+
+.ed-form {
+  /* cho phần form (card) chiếm full width trong .ed-wrap */
+  width: 100%;
+}
+
+/* vùng editor có background */
+.editor-container {
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* overlay để chữ dễ đọc trên nền ảnh */
+.editor-overlay {
+  border-radius: 12px;
+  padding: 8px;
+}
+
+/* ==== Quill toolbar: ép hiển thị 1 dòng ==== */
+.ql-toolbar.ql-snow {
+  display: flex;
+  flex-wrap: nowrap;        /* KHÔNG xuống dòng */
+  align-items: center;
+  gap: 6px;
+  /* nới khoảng cách 2 bên để không bị cấn */
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 6px;
+}
+/* Card to hơn, lưới cột rộng hơn */
+.jr-grid.jr-grid--large {
+  display: grid;
+  gap: 16px;
+  /* Card tối thiểu 480px để đủ chỗ nút */
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+}
+
+/* Thân card rộng rãi hơn */
+.jr-card.jr-card--large {
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #efeafe;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.06);
+}
+
+/* Ảnh đại diện/thumbnail cao hơn */
+.jr-thumb.jr-thumb--large {
+  height: 140px;                /* tăng chiều cao */
+  border-radius: 12px;
+  background: #efeafe;
+  margin-bottom: 12px;
+}
+
+/* Tiêu đề nổi bật một chút */
+.jr-card-title {
+  margin: 6px 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* Ẩn hoàn toàn phần excerpt nếu còn class cũ đâu đó */
+.jr-card-excerpt { display: none !important; }
+
+/* Meta hàng dưới title */
+.jr-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+/* Hàng avatar/author */
+.jr-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* Khu vực nút: wrap 2 hàng hoặc hơn tuỳ độ rộng */
+.jr-card-actions.jr-card-actions--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Nút trong card: co giãn, dễ bấm; 2 nút/row trên màn hình rộng */
+.jr-card-actions.jr-card-actions--wrap > button {
+  flex: 1 1 calc(50% - 8px);
+  min-width: 160px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.jr-card-actions.jr-card-actions--wrap > button:hover {
+  transform: translateY(-1px);
+  background: #f7f5ff;
+  box-shadow: 0 6px 16px rgba(124,58,237,.08);
+}
+
+/* Mobile: 1 nút/row để không chật */
+@media (max-width: 560px) {
+  .jr-grid.jr-grid--large {
+    grid-template-columns: 1fr;
+  }
+  .jr-card-actions.jr-card-actions--wrap > button {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
 
 
+/* Nếu màn nhỏ quá, cho phép kéo ngang, nhưng vẫn giữ 1 dòng */
+@media (max-width: 1200px) {
+  .ql-toolbar.ql-snow {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;        /* Firefox */
+  }
+  .ql-toolbar.ql-snow::-webkit-scrollbar {
+    height: 6px;                  /* Chrome/Edge */
+  }
+}
+
+/* Quill editor tối thiểu đủ cao để thấy full bg */
+.ql-container.ql-snow {
+  min-height: 600px;
+  border-radius: 10px;
+}
+/* Optional tweaks for Reviews */
+.jr-card { border-radius: 14px; }
+.ed-textarea { background: #fff; }
 /* ========== Responsive ========== */
 @media (max-width: 980px){
   .jr-grid{ grid-template-columns: repeat(2,1fr); }

@@ -12,6 +12,7 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import ChangePassword from "./components/Auth/ChangePassword";
 import ProfilePage from "./components/Auth/ProfilePage";
+import ReviewsPage from "./components/Reviews/ReviewsPage";
 import Logout from "./components/Auth/Logout";
 
 import PremiumPage from "./components/Premium/PremiumPage";
@@ -27,6 +28,7 @@ import UploadTemplate from "./components/Template/UploadTemplate";
 import AdminLayout from "./components/Admin/AdminLayout";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminTemplatesPage from "./components/Admin/AdminTemplatesPage";
+import AdminReviewsPage from "./components/Admin/AdminReviewsPage";
 
 import PrivateRoute from "./components/Auth/PrivateRoute";
 
@@ -57,6 +59,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/logout" element={<Logout />} />
 
         {/* Premium */}
@@ -77,6 +80,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="templates" element={<AdminTemplatesPage />} />
+          <Route path="reviews" element={<AdminReviewsPage />} />
           {/* fallback trong /admin */}
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>

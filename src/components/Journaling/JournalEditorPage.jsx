@@ -12,19 +12,68 @@ import {
 } from "../../services/journalService";
 import { getTemplates } from "../../services/templateService";
 
+// ✅ Rich text editor
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
 const moodLabel = {
   happy: "😊 Happy",
   sad: "😢 Sad",
   calm: "😌 Calm",
 };
 
-// Chuẩn hoá URL ảnh (server trả path tương đối)
+// Chuẩn hoá URL ảnh
 function toAbsolute(u) {
   if (!u) return "";
   if (/^https?:\/\//i.test(u)) return u;
   const origin = import.meta.env.VITE_API_ORIGIN || "http://localhost:3000";
   return u.startsWith("/") ? origin + u : origin + "/" + u;
 }
+
+// Lấy plain text để đếm words/chars
+function htmlToText(html = "") {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
+}
+
+// Toolbar giống Word
+const editorModules = {
+  toolbar: [
+    [{ font: [] }, { size: [] }], // font + cỡ chữ
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ color: [] }, { background: [] }],
+    [{ script: "sub" }, { script: "super" }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["blockquote", "code-block"],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
+
+// Formats cho Quill (khớp toolbar)
+const editorFormats = [
+  "header",
+  "font",
+  "size",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "script",
+  "list",
+  "bullet",
+  "align",
+  "blockquote",
+  "code-block",
+  "link",
+  "image",
+];
 
 export default function JournalEditorPage() {
   const { id } = useParams();
@@ -41,21 +90,21 @@ export default function JournalEditorPage() {
 
   // journal state
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(""); // HTML từ Quill
   const [mood, setMood] = useState("happy");
 
   // template background
   const [templateUrl, setTemplateUrl] = useState("");
   const [templateMeta, setTemplateMeta] = useState(null);
 
-  // info
-  const info = useMemo(
-    () => ({
-      chars: content.length,
-      words: (content.trim().match(/\S+/g) || []).length,
-    }),
-    [content]
-  );
+  // info (đếm dựa trên text từ HTML)
+  const info = useMemo(() => {
+    const text = htmlToText(content);
+    return {
+      chars: text.length,
+      words: text ? text.split(/\s+/).length : 0,
+    };
+  }, [content]);
 
   useEffect(() => {
     if (!id) return;
@@ -73,28 +122,49 @@ export default function JournalEditorPage() {
         const tplId = j?.templateId || passedTplId || null;
 
         if (tplId) {
-          const list = await getTemplates();
-          const arr = Array.isArray(list) ? list : [];
+          const res = await getTemplates();
+          let arr = [];
+
+          if (Array.isArray(res)) arr = res;
+          else if (Array.isArray(res?.list)) arr = res.list;
+          else if (res?.data) {
+            arr = [
+              ...(res.data.defaultTemplates || []),
+              ...(res.data.premiumTemplates || []),
+              ...(res.data.userTemplates || []),
+              ...(res.data.templates || []),
+            ];
+          }
+
           const found =
-            arr.find((t) => t.id === tplId || t._id === tplId) || null;
+            arr.find((t) => (t._id || t.id) === tplId) ||
+            arr.find((t) => t._id === tplId || t.id === tplId) ||
+            null;
+
           if (found) {
             const img =
               found.imageUrl ||
+              found.thumbnailUrl ||
               found.thumbnail ||
               found.preview ||
               found.image ||
               found.templateUrl ||
               "";
+
             setTemplateUrl(toAbsolute(img));
             setTemplateMeta({
-              id: found.id || found._id,
+              id: found._id || found.id,
               name: found.name,
               desc: found.description,
               category: (found.category || "default").toLowerCase(),
             });
+
             if (!j?.content && found.starterText) {
               setContent(found.starterText);
             }
+          } else {
+            setTemplateUrl("");
+            setTemplateMeta(null);
           }
         }
       } catch (e) {
@@ -107,11 +177,10 @@ export default function JournalEditorPage() {
     })();
   }, [id, navigate, location.state]);
 
-  // Mở modal xác nhận
+  // Save confirm
   function onSaveClick() {
-    // Validate nhanh
     const t = (title || "").trim();
-    const c = (content || "").trim();
+    const c = htmlToText(content);
     if (!t || !c) {
       setErr("Title và Content không được để trống.");
       return;
@@ -119,7 +188,6 @@ export default function JournalEditorPage() {
     setShowConfirm(true);
   }
 
-  // Người dùng bấm Yes trong modal
   async function confirmSave() {
     if (!id) return;
     setSaving(true);
@@ -127,13 +195,12 @@ export default function JournalEditorPage() {
     try {
       const payload = {
         title: (title || "").trim(),
-        content: (content || "").trim(),
+        content: content || "",
         mood,
         ...(templateMeta?.id ? { templateId: templateMeta.id } : {}),
       };
       await updateJournal(id, payload);
       setShowConfirm(false);
-      // Quay về dashboard sau khi save thành công
       navigate("/journal");
     } catch (e) {
       const status = e?.response?.status;
@@ -148,11 +215,12 @@ export default function JournalEditorPage() {
     setShowConfirm(false);
   }
 
+  // AI tools
   async function doAnalyze() {
     if (!id) return;
     setAiBusy(true);
     try {
-      const res = await analyze({ content, journalId: id });
+      const res = await analyze({ content: htmlToText(content), journalId: id });
       const s = res?.data?.sentiment || res?.data?.sentiment?.label || "?";
       const kw = (res?.data?.keywords || []).slice(0, 8).join(", ");
       alert(`Sentiment: ${s}\nKeywords: ${kw || "(none)"}`);
@@ -173,11 +241,8 @@ export default function JournalEditorPage() {
       if (!tips.length) {
         alert("No suggestions.");
       } else {
-        setContent((prev) =>
-          prev
-            ? prev + "\n\n" + tips.map((t) => "• " + t).join("\n")
-            : tips.map((t) => "• " + t).join("\n")
-        );
+        const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
+        setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
       }
     } catch (e) {
       alert(e?.response?.data?.message || "Suggest failed.");
@@ -188,7 +253,7 @@ export default function JournalEditorPage() {
 
   async function doAssistant() {
     if (!id) return;
-    const q = prompt("Ask the assistant (e.g. 'How do I cope with stress today?')");
+    const q = prompt("Ask the assistant:");
     if (!q) return;
     setAiBusy(true);
     try {
@@ -204,7 +269,7 @@ export default function JournalEditorPage() {
   if (loading) return <div className="ed-wrap"><p>Loading...</p></div>;
 
   return (
-    <div className="ed-wrap">
+    <div className="ed-wrap wide">
       <div className="ed-header">
         <h1>Edit Journal</h1>
         <div className="ed-actions">
@@ -215,7 +280,6 @@ export default function JournalEditorPage() {
         </div>
       </div>
 
-      {/* Template info nhỏ gọn */}
       {templateMeta && (
         <div className="ed-tpl">
           <div className="ed-tpl-right">
@@ -252,21 +316,39 @@ export default function JournalEditorPage() {
           <span className="ed-meta">{info.chars} chars</span>
         </div>
 
-        {/* Textarea có background template + overlay làm mờ ảnh để dễ đọc */}
-        <textarea
-          className="ed-textarea"
-          placeholder="Start journaling..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+        {/* ✅ Editor với background FULL */}
+        <div
+          className="editor-container"
           style={{
-            backgroundImage: templateUrl
-              ? `linear-gradient(rgba(255,255,255,.84), rgba(255,255,255,.84)), url(${templateUrl})`
-              : "none",
+            backgroundImage: templateUrl ? `url(${templateUrl})` : "none",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
+            borderRadius: 12,
+            padding: 16,
           }}
-        />
+        >
+          <div
+            className="editor-overlay"
+            style={{
+              backgroundColor: templateUrl ? "rgba(255,255,255,0.84)" : "transparent",
+              borderRadius: 12,
+              padding: 8,
+            }}
+          >
+            <ReactQuill
+              theme="snow"
+              value={content}
+              onChange={setContent}
+              modules={editorModules}
+              formats={editorFormats}
+              placeholder="Start journaling..."
+              style={{
+                minHeight: 600,
+                borderRadius: 10,
+              }}
+            />
+          </div>
+        </div>
 
         <div className="ed-footerbar">
           <button className="ed-btn" onClick={doAnalyze} disabled={aiBusy}>Analyze (AI)</button>
@@ -282,7 +364,6 @@ export default function JournalEditorPage() {
         </div>
       </div>
 
-      {/* Confirm Save Modal */}
       {showConfirm && (
         <div className="modal-backdrop" onClick={cancelConfirm}>
           <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>

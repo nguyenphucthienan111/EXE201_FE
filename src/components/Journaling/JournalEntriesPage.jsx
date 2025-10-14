@@ -1,5 +1,5 @@
 // src/components/Journal/JournalEntriesPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/Journal.css";
 import {
@@ -10,7 +10,7 @@ import {
   analyze,
   markSynced,
 } from "../../services/journalService";
-import { getTemplates } from "../../services/templateService";
+import { getTemplates, useTemplate as applyTemplate } from "../../services/templateService";
 
 const moodOptions = [
   { id: "happy", label: "😊 Happy" },
@@ -44,9 +44,13 @@ export default function JournalEntriesPage() {
 
   // template picking (chỉ dùng cho CREATE)
   const [useTemplate, setUseTemplate] = useState(false);
-  const [templates, setTemplates] = useState([]);           // [{id, name, imageUrl, ...}]
+  const [templates, setTemplates] = useState([]); // [{id, name, imageUrl, isPremium?, ...}]
   const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesError, setTemplatesError] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+
+  // premium status (suy từ getTemplates -> userPlan nếu BE có trả)
+  const [isPremiumActive, setIsPremiumActive] = useState(null); // null = chưa biết, true/false = xác định
 
   // Load list từ server
   useEffect(() => {
@@ -73,10 +77,6 @@ export default function JournalEntriesPage() {
       prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
     );
 
-  // ---- NEW: tìm entry mới nhất để Continue ----
-
-  // ---------------------------------------------
-
   // filter client-side
   const filtered = useMemo(() => {
     const now = new Date();
@@ -85,9 +85,11 @@ export default function JournalEntriesPage() {
     if (dateFilter === "today") {
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     } else if (dateFilter === "week") {
-      start = new Date(now); start.setDate(start.getDate() - 7);
+      start = new Date(now);
+      start.setDate(start.getDate() - 7);
     } else if (dateFilter === "month") {
-      start = new Date(now); start.setMonth(start.getMonth() - 1);
+      start = new Date(now);
+      start.setMonth(start.getMonth() - 1);
     }
     const kw = (keyword || topSearch).toLowerCase().trim();
 
@@ -125,6 +127,9 @@ export default function JournalEntriesPage() {
       setFormMood(entry.mood);
       setUseTemplate(false);
       setSelectedTemplateId(null);
+      setIsPremiumActive(null);
+      setTemplates([]);
+      setTemplatesError("");
     } else {
       // Create
       setEditing(null);
@@ -132,28 +137,62 @@ export default function JournalEntriesPage() {
       setFormMood("happy");
       setUseTemplate(false);
       setSelectedTemplateId(null);
+      setIsPremiumActive(null);
+      setTemplates([]);
+      setTemplatesError("");
     }
     setShowModal(true);
   };
 
+  // helper: xác định premium flag từ template (khi BE có trả)
+  const isTplPremium = (t) =>
+    t?.isPremium === true || t?.tier === "premium" || t?.plan === "premium";
+
+  // helper: suy ra trạng thái premium từ userPlan (chuỗi | boolean | object)
+  const inferPremiumFromUserPlan = (userPlan) => {
+    if (typeof userPlan === "string") return /premium/i.test(userPlan);
+    if (typeof userPlan === "boolean") return userPlan;
+    if (userPlan && typeof userPlan === "object") {
+      if (userPlan.isPremiumActive === true) return true;
+      const hint = [userPlan.tier, userPlan.plan, userPlan.name].filter(Boolean).join(" ");
+      if (hint) return /premium/i.test(hint);
+    }
+    return null;
+  };
+
+  // Hàm load templates (gom lại để dùng cả khi click Reload)
+  const loadTemplates = useCallback(async () => {
+    setTemplatesLoading(true);
+    setTemplatesError("");
+    try {
+      const res = await getTemplates();
+      // res: { list, userPlan } theo service mới
+      const list = Array.isArray(res?.list) ? res.list : [];
+      setTemplates(list);
+      setIsPremiumActive(inferPremiumFromUserPlan(res?.userPlan));
+
+      if (list.length === 0) {
+        setTemplatesError("No templates available. (Check /api/templates response & baseURL /api)");
+      }
+    } catch (e) {
+      console.error("Failed to load templates", e);
+      setTemplates([]);
+      setIsPremiumActive(null);
+      const msg =
+        e?.response?.data?.message || e?.message || "Failed to load templates.";
+      setTemplatesError(msg);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  }, []);
+
   // Tải templates khi bật "Use template"
   useEffect(() => {
     if (!showModal || !useTemplate || editing) return;
-    (async () => {
-      try {
-        setTemplatesLoading(true);
-        const list = await getTemplates();
-        setTemplates(Array.isArray(list) ? list : []);
-      } catch (e) {
-        console.error("Failed to load templates", e);
-        setTemplates([]);
-      } finally {
-        setTemplatesLoading(false);
-      }
-    })();
-  }, [showModal, useTemplate, editing]);
+    loadTemplates();
+  }, [showModal, useTemplate, editing, loadTemplates]);
 
-  // submit create/update
+  // submit create/update (CREATE → APPLY TEMPLATE)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -171,12 +210,9 @@ export default function JournalEntriesPage() {
           setSaving(false);
           return;
         }
-        const payload = {
-          title: formTitle,
-          mood: formMood,
-          ...(useTemplate && selectedTemplateId ? { templateId: selectedTemplateId } : {}),
-        };
-        const created = await createJournal(payload);
+
+        // 1) Tạo journal KHÔNG gửi templateId (để tách bước apply)
+        const created = await createJournal({ title: formTitle, mood: formMood });
         const newId =
           created?._id ||
           created?.id ||
@@ -192,6 +228,24 @@ export default function JournalEntriesPage() {
           alert("Create journal failed: missing id from server.");
           setSaving(false);
           return;
+        }
+
+        // 2) Nếu dùng template thì APPLY; 403 => chưa có quyền (không phải Premium)
+        if (useTemplate && selectedTemplateId) {
+          try {
+            await applyTemplate(selectedTemplateId, newId);
+          } catch (err) {
+            const s = err?.response?.status;
+            const m = err?.response?.data?.message || "Apply template failed.";
+            if (s === 403) {
+              alert(m || "Premium access required.");
+            } else if (s === 404) {
+              alert("Template or Journal not found.");
+            } else {
+              alert(m);
+            }
+            // vẫn cho vào editor; chỉ là template chưa apply
+          }
         }
 
         setShowModal(false);
@@ -438,18 +492,39 @@ export default function JournalEntriesPage() {
                   {templatesLoading ? (
                     <div>Loading templates…</div>
                   ) : templates.length === 0 ? (
-                    <div style={{ fontSize: 14, opacity: 0.7 }}>No templates available.</div>
+                    <div style={{ fontSize: 14, opacity: 0.7 }}>
+                      {templatesError || "No templates available."}{" "}
+                      <button
+                        type="button"
+                        className="jr-btn ghost"
+                        style={{ marginLeft: 8 }}
+                        onClick={loadTemplates}
+                      >
+                        Reload
+                      </button>
+                    </div>
                   ) : (
                     <div className="tpl-grid">
                       {templates.map((t) => {
-                        const isSel = selectedTemplateId === t.id;
+                        const tid = t.id ?? t._id ?? t.templateId; // robust
+                        const isSel = selectedTemplateId === tid;
+                        const premium = isTplPremium(t);
+                        const disabled = premium && isPremiumActive === false; // nếu user không premium thì disable
+
                         return (
                           <button
-                            key={t.id}
+                            key={tid}
                             type="button"
-                            className={`tpl-item ${isSel ? "is-active" : ""}`}
-                            onClick={() => setSelectedTemplateId(t.id)}
-                            title={t.name}
+                            className={`tpl-item ${isSel ? "is-active" : ""} ${disabled ? "is-disabled" : ""}`}
+                            onClick={() => {
+                              if (disabled) {
+                                alert("Premium only");
+                                return;
+                              }
+                              setSelectedTemplateId(tid);
+                            }}
+                            title={premium ? `${t.name} (Premium)` : t.name}
+                            aria-disabled={disabled}
                           >
                             {t.imageUrl ? (
                               <img
@@ -469,7 +544,9 @@ export default function JournalEntriesPage() {
                                 }}
                               />
                             )}
-                            <span className="tpl-name">{t.name}</span>
+                            <span className="tpl-name">
+                              {t.name || "Untitled"} {premium ? "★" : ""}
+                            </span>
                           </button>
                         );
                       })}

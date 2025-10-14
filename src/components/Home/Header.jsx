@@ -3,9 +3,9 @@ import "../style/Header.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Link as ScrollLink, scroller } from "react-scroll";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { logout as apiLogout, changePassword } from "../../services/authService"; // changePassword: POST /api/auth/change-password
+import { logout as apiLogout, changePassword } from "../../services/authService";
 
-// NEW: import notification service
+// Notifications
 import {
   getUnreadCount,
   getNotifications,
@@ -14,6 +14,10 @@ import {
   deleteNotification,
 } from "../../services/notificationService";
 
+// Reviews
+import { getMyReview } from "../../services/reviewService";
+
+// ========== Change Password Modal ==========
 // eslint-disable-next-line react/prop-types
 function ChangePasswordModal({ open, onClose }) {
   const [cur, setCur] = useState("");
@@ -76,19 +80,20 @@ function ChangePasswordModal({ open, onClose }) {
   );
 }
 
+// ============== Header ==============
 function Header() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ---- auth state từ localStorage
+  // ---- auth state
+  const safeParse = (s) => { try { return JSON.parse(s); } catch { return null; } };
   const readUser = () => {
     const token = localStorage.getItem("access_token");
     const userJson = localStorage.getItem("user");
     return { token, user: userJson ? safeParse(userJson) : null };
   };
-  const safeParse = (s) => { try { return JSON.parse(s); } catch { return null; } };
-
   const [{ token, user }, setAuth] = useState(readUser());
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
@@ -111,7 +116,7 @@ function Header() {
     };
   }, [refreshAuth]);
 
-  // map route -> text cạnh logo
+  // Route title
   const titles = {
     "/": "Everquill",
     "/about": "About",
@@ -120,10 +125,12 @@ function Header() {
     "/login": "Log in",
     "/profile": "Profile",
     "/journals": "Journals",
+    "/reviews": "Reviews",
   };
   const cleanPath = location.pathname.replace(/\/+$/, "") || "/";
   const currentTitle = titles[cleanPath] ?? "Everquill";
 
+  // Search
   const onSearch = (e) => {
     e.preventDefault();
     const q = new FormData(e.currentTarget).get("q")?.toString().trim() ?? "";
@@ -132,7 +139,7 @@ function Header() {
     setMenuOpen(false);
   };
 
-  // smooth scroll
+  // scroll helpers
   const scrollTo = (target) => scroller.scrollTo(target, { smooth: true, duration: 600, offset: -80 });
   const goToAndScroll = async (target) => {
     if (location.pathname !== "/") {
@@ -145,19 +152,22 @@ function Header() {
 
   const displayName = user?.name || user?.email || "Me";
   const initial = (displayName?.[0] || "U").toUpperCase();
+  const loggedIn = !!token;
 
   const handleLogout = async () => {
     try { await apiLogout(); } finally {
       setMenuOpen(false);
       setAuth({ token: null, user: null });
+      if (user?._id || user?.id || user?.email) {
+        const uid = user._id || user.id || user.email;
+        localStorage.removeItem(`has_review_${uid}`);
+      }
       navigate("/login");
     }
   };
 
-  const loggedIn = !!token;
-
   // =======================
-  // NEW: Notification state & helpers
+  // Notifications
   // =======================
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -167,7 +177,6 @@ function Header() {
   const [hasMore, setHasMore] = useState(false);
   const pageSize = 20;
 
-  // normalize data phòng thủ theo các key phổ biến
   const normalize = (n) => ({
     id: n?.id ?? n?._id ?? n?.notificationId ?? String(Math.random()),
     title: n?.title ?? n?.type ?? "Notification",
@@ -183,9 +192,7 @@ function Header() {
       const res = await getUnreadCount();
       const count = res?.data?.unreadCount ?? 0;
       setUnreadCount(count);
-    } catch {
-      // lặng lẽ bỏ qua badge lỗi
-    }
+    } catch { /* ignore */ }
   }, [loggedIn]);
 
   const fetchList = useCallback(
@@ -197,9 +204,8 @@ function Header() {
         const res = await getNotifications({ page: nextPage, limit: pageSize });
         const items = (res?.data?.notifications ?? []).map(normalize);
         setNotifs((prev) => (reset ? items : [...prev, ...items]));
-        setHasMore(items.length === pageSize); // đoán còn nữa nếu đủ pageSize
+        setHasMore(items.length === pageSize);
         setPage(nextPage);
-        // đồng bộ badge nếu backend trả kèm
         if (typeof res?.data?.unreadCount === "number") {
           setUnreadCount(res.data.unreadCount);
         }
@@ -213,17 +219,15 @@ function Header() {
     [loggedIn]
   );
 
-  // load badge khi đăng nhập + refetch định kỳ
   useEffect(() => {
     let interval;
     if (loggedIn) {
       fetchUnread();
-      interval = setInterval(fetchUnread, 45000); // 45s
+      interval = setInterval(fetchUnread, 45000);
     }
     return () => interval && clearInterval(interval);
   }, [loggedIn, fetchUnread]);
 
-  // khi bật panel lần đầu, load trang 1
   const prevOpen = useRef(false);
   useEffect(() => {
     if (notifOpen && !prevOpen.current) {
@@ -234,15 +238,12 @@ function Header() {
 
   const handleItemMarkRead = async (notificationId) => {
     try {
-      // tối ưu UI trước
       setNotifs((arr) =>
         arr.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
       setUnreadCount((c) => Math.max(0, c - 1));
       await markNotificationRead(notificationId);
-      // có thể fetchUnread() để đồng bộ tuyệt đối (không bắt buộc)
     } catch {
-      // nếu lỗi, roll back đơn giản
       setNotifs((arr) =>
         arr.map((n) => (n.id === notificationId ? { ...n, read: false } : n))
       );
@@ -252,12 +253,10 @@ function Header() {
 
   const handleMarkAllRead = async () => {
     try {
-      // optimistic
       setNotifs((arr) => arr.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
       await markAllNotificationsRead();
     } catch {
-      // nếu lỗi, refetch để đồng bộ
       fetchList({ reset: true, nextPage: 1 });
       fetchUnread();
     }
@@ -265,28 +264,23 @@ function Header() {
 
   const handleDeleteOne = async (notificationId) => {
     const target = notifs.find((n) => n.id === notificationId);
-    // optimistic: loại khỏi UI ngay
     setNotifs((arr) => arr.filter((n) => n.id !== notificationId));
     if (target && !target.read) setUnreadCount((c) => Math.max(0, c - 1));
     try {
       await deleteNotification(notificationId);
     } catch {
-      // nếu lỗi, reload lại list & badge cho khớp
       fetchList({ reset: true, nextPage: 1 });
       fetchUnread();
     }
   };
 
   const handleClearAll = async () => {
-    // Không có endpoint delete-all, ta xoá tuần tự những cái đang hiển thị
     const ids = notifs.map((n) => n.id);
     if (!ids.length) return;
-    // optimistic
     setNotifs([]);
     setUnreadCount(0);
     try {
       await Promise.allSettled(ids.map((id) => deleteNotification(id)));
-      // Sau khi xoá, có thể còn trang sau: refetch trang 1 để sync
       fetchList({ reset: true, nextPage: 1 });
       fetchUnread();
     } catch {
@@ -296,15 +290,79 @@ function Header() {
   };
 
   const loadMore = () => {
-    if (!notifLoading && hasMore) {
-      fetchList({ reset: false, nextPage: page + 1 });
+    if (!notifLoading && hasMore) fetchList({ reset: false, nextPage: page + 1 });
+  };
+
+  // =======================
+  // Rate us – chỉ 1 lần
+  // =======================
+  const [canRate, setCanRate] = useState(false);
+  const cacheKey = user ? `has_review_${user._id || user.id || user.email}` : null;
+
+  // Chuẩn hoá và kiểm tra chính xác “đã đánh giá chưa”
+  function hasUserReviewed(res) {
+    const d = res?.data ?? res;
+    if (!d) return false;
+
+    if (Array.isArray(d)) return d.length > 0;                   // [review]
+    if (typeof d === "object") {
+      if (Array.isArray(d.reviews)) return d.reviews.length > 0; // {reviews:[...]}
+      if (d.review) {                                            // {review:{...}}
+        const r = d.review;
+        return !!(r?._id || r?.id || typeof r?.rating === "number");
+      }
+      if (d._id || d.id || typeof d.rating === "number") return true; // trả object review
+      if (typeof d.hasReviewed === "boolean") return d.hasReviewed;    // {hasReviewed:true}
+      if (typeof d.count === "number") return d.count > 0;             // {count:n}
+      return false;
     }
+    return false;
+  }
+
+  const checkRateEligibility = useCallback(async () => {
+    if (!loggedIn || !user) {
+      setCanRate(false);
+      return;
+    }
+    if (cacheKey && localStorage.getItem(cacheKey) === "true") {
+      setCanRate(false);
+      return;
+    }
+    try {
+      const res = await getMyReview();
+      const reviewed = hasUserReviewed(res);
+      setCanRate(!reviewed);
+      if (reviewed && cacheKey) localStorage.setItem(cacheKey, "true");
+    } catch {
+      // Nếu API lỗi, vẫn cho phép hiện nút để user có thể vào trang /reviews
+      setCanRate(true);
+    }
+  }, [loggedIn, user, cacheKey]);
+
+  useEffect(() => {
+    checkRateEligibility();
+  }, [checkRateEligibility]);
+
+  // Sau khi submit review ở trang Reviews:
+  // window.dispatchEvent(new CustomEvent("review:submitted"));
+  useEffect(() => {
+    const onSubmitted = () => {
+      setCanRate(false);
+      if (cacheKey) localStorage.setItem(cacheKey, "true");
+    };
+    window.addEventListener("review:submitted", onSubmitted);
+    return () => window.removeEventListener("review:submitted", onSubmitted);
+  }, [cacheKey]);
+
+  const goRateUs = () => {
+    setMenuOpen(false);
+    navigate("/reviews");
   };
 
   return (
     <header className={`header ${loggedIn ? "header--auth" : ""}`}>
       <div className="header__container">
-        {/* Logo + tiêu đề theo route */}
+        {/* Logo + title */}
         <NavLink className="logo" to="/" end>
           <img src="/src/assets/logo-feather.png" alt="Everquill logo" className="logo__img" />
           <span className="logo__text">{currentTitle}</span>
@@ -320,24 +378,18 @@ function Header() {
                 <NavLink to="/" end>Home</NavLink>
               )}
             </li>
-
             <li>
               <button type="button" className="linklike" onClick={() => goToAndScroll("features")}>Features</button>
             </li>
-
             <li><NavLink to="/about">About</NavLink></li>
             <li><NavLink to="/contact">Contact</NavLink></li>
             <li><NavLink to="/premium">Premium</NavLink></li>
-
-            {!loggedIn && (
-              <li><NavLink to="/login">Log in</NavLink></li>
-            )}
+            {!loggedIn && <li><NavLink to="/login">Log in</NavLink></li>}
           </ul>
         </nav>
 
-        {/* ACTIONS: Khi login: [Search][Bell][User ở góc] ; Khi chưa login: chỉ [Search] */}
+        {/* ACTIONS */}
         <div className="actions">
-          {/* Search – luôn hiển thị, nhưng khi login sẽ nằm trước chuông & user */}
           <form className="search" role="search" onSubmit={onSearch}>
             <input name="q" type="search" placeholder="Search in site" aria-label="Search in site" />
             <button className="search__btn" aria-label="Search">
@@ -358,18 +410,16 @@ function Header() {
                   aria-haspopup="menu"
                   aria-expanded={notifOpen}
                 >
-                  {/* icon chuông */}
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z" fill="currentColor"/>
                   </svg>
-                  {/* NEW: badge thật */}
                   {unreadCount > 0 && <span className="badge" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
                 </button>
 
                 {notifOpen && (
                   <div className="notif-panel" role="menu">
                     <div className="notif-head">
-                      <div style={{fontWeight:800, color:"#4335a7"}}>Notifications</div>
+                      <div className="notif-title-head">Notifications</div>
                       <div className="notif-actions">
                         <button className="mini" onClick={handleMarkAllRead} disabled={!notifs.length}>Mark read</button>
                         <button className="mini danger" onClick={handleClearAll} disabled={!notifs.length}>Clear</button>
@@ -377,7 +427,7 @@ function Header() {
                     </div>
 
                     <div className="notif-list">
-                      {notifErr && <div className="notif-empty" style={{color:"#d04848"}}>{notifErr}</div>}
+                      {notifErr && <div className="notif-empty error">{notifErr}</div>}
                       {!notifErr && notifLoading && !notifs.length && (
                         <div className="notif-empty">Loading…</div>
                       )}
@@ -422,7 +472,7 @@ function Header() {
                 )}
               </div>
 
-              {/* User ở góc phải */}
+              {/* User */}
               <div className="nav-user">
                 <button
                   type="button"
@@ -441,6 +491,14 @@ function Header() {
                 {menuOpen && (
                   <div className="user-menu" role="menu">
                     <NavLink to="/profile" className="user-menu__item" onClick={() => setMenuOpen(false)}>Profile</NavLink>
+
+                    {/* Rate us – chỉ hiện khi chưa từng đánh giá */}
+                    {canRate && (
+                      <button className="user-menu__item" onClick={goRateUs}>
+                        Rate us ⭐
+                      </button>
+                    )}
+
                     <button className="user-menu__item" onClick={() => { setMenuOpen(false); setShowChangePw(true); }}>
                       Change password
                     </button>

@@ -1,21 +1,30 @@
 // src/services/adminTemplateService.js
-import api from "./api";
+import api from "./api"; // axios instance đã config interceptor
 
-/** Admin: Upload a new template */
-export async function uploadAdminTemplate({ name, description, category, file }) {
+// Lấy tất cả templates (Admin only)
+export function getAdminTemplates() {
+  return api.get("/templates/admin");
+}
+
+// Upload template mới (Admin only)
+export function uploadAdminTemplate({ name, description, category, file }) {
   const formData = new FormData();
   formData.append("name", name);
   formData.append("description", description);
-  formData.append("category", category);     // backend yêu cầu có field này
-  formData.append("template", file);         // TÊN field file phải là "template"
+  formData.append("category", category);
+  formData.append("template", file); // backend yêu cầu field "template"
 
-  // Để Axios tự set multipart boundary (tránh 400)
-  const { data } = await api.post("/templates/admin", formData);
-  return data;
+  return api.post("/templates/admin", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 }
 
-/** Admin: Get all templates */
-export async function getAdminTemplates() {
-  const { data } = await api.get("/templates/admin");
-  return data;
+// Xoá template hệ thống (chỉ default/premium, admin mới xoá được)
+export function deleteAdminTemplate(templateId) {
+  return api.delete(`/templates/admin/${templateId}`);
+}
+
+// Toggle bật/tắt trạng thái template (active/inactive)
+export function toggleAdminTemplateStatus(templateId) {
+  return api.patch(`/templates/admin/${templateId}/toggle-status`);
 }
