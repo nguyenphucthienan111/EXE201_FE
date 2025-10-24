@@ -1,79 +1,28 @@
 // src/components/Journal/JournalEditorPage.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "../style/Journal.css";
 import {
   getJournal,
   updateJournal,
-  analyze,
-  suggestBasic,
-  suggestAdvanced,
-  assistant,
+  saveAnalysisHistory, // ⬅️ thêm để lưu lịch sử
 } from "../../services/journalService";
-import { getTemplates } from "../../services/templateService";
+import { getTemplates, toAbsUrl } from "../../services/templateService";
+import useJournalAI from "../../hooks/useJournalAI";
+import SaveConfirmModal from "../common/SaveConfirmModal";
+import AnalyzeResultModal from "../Journaling/AnalyzeResultModal";
 
-// ✅ Rich text editor
+// Rich text editor
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { editorModules, editorFormats } from "../../config/quillConfig";
+import { htmlToText } from "../../utils/text";
 
 const moodLabel = {
   happy: "😊 Happy",
   sad: "😢 Sad",
   calm: "😌 Calm",
 };
-
-// Chuẩn hoá URL ảnh
-function toAbsolute(u) {
-  if (!u) return "";
-  if (/^https?:\/\//i.test(u)) return u;
-  const origin = import.meta.env.VITE_API_ORIGIN || "http://localhost:3000";
-  return u.startsWith("/") ? origin + u : origin + "/" + u;
-}
-
-// Lấy plain text để đếm words/chars
-function htmlToText(html = "") {
-  if (!html) return "";
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
-}
-
-// Toolbar giống Word
-const editorModules = {
-  toolbar: [
-    [{ font: [] }, { size: [] }], // font + cỡ chữ
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ color: [] }, { background: [] }],
-    [{ script: "sub" }, { script: "super" }],
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: [] }],
-    ["blockquote", "code-block"],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
-
-// Formats cho Quill (khớp toolbar)
-const editorFormats = [
-  "header",
-  "font",
-  "size",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "color",
-  "background",
-  "script",
-  "list",
-  "bullet",
-  "align",
-  "blockquote",
-  "code-block",
-  "link",
-  "image",
-];
 
 export default function JournalEditorPage() {
   const { id } = useParams();
@@ -82,29 +31,56 @@ export default function JournalEditorPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [aiBusy, setAiBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  // Xác nhận save
+  // confirm modal
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // analysis modal
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   // journal state
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState(""); // HTML từ Quill
+  const [content, setContent] = useState("");
   const [mood, setMood] = useState("happy");
 
-  // template background
+  // template
   const [templateUrl, setTemplateUrl] = useState("");
   const [templateMeta, setTemplateMeta] = useState(null);
 
-  // info (đếm dựa trên text từ HTML)
+  // export
+  const exportRef = useRef(null);
+  const [exporting, setExporting] = useState(false);
+
+  // AI hook
+  const { busy: aiBusy, analyze, suggestBasic, suggestPlus } = useJournalAI();
+
+  // 🔒 Khi AI đang chạy -> khóa toàn bộ thao tác
+  const locked = aiBusy;
+
   const info = useMemo(() => {
     const text = htmlToText(content);
-    return {
-      chars: text.length,
-      words: text ? text.split(/\s+/).length : 0,
-    };
+    return { chars: text.length, words: text ? text.split(/\s+/).length : 0 };
   }, [content]);
+
+  // 🔒 Chặn phím tắt/nhập liệu khi đang locked
+  useEffect(() => {
+    if (!locked) return;
+    const onKey = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    window.addEventListener("keypress", onKey, { capture: true });
+    window.addEventListener("keyup", onKey, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", onKey, { capture: true });
+      window.removeEventListener("keypress", onKey, { capture: true });
+      window.removeEventListener("keyup", onKey, { capture: true });
+    };
+  }, [locked]);
 
   useEffect(() => {
     if (!id) return;
@@ -117,51 +93,26 @@ export default function JournalEditorPage() {
         setContent(j?.content || j?.templateContent || "");
         setMood(j?.mood || "happy");
 
-        // Ưu tiên lấy templateId từ journal; fallback lấy từ state khi navigate
         const passedTplId = location.state?.templateId || null;
         const tplId = j?.templateId || passedTplId || null;
 
         if (tplId) {
           const res = await getTemplates();
-          let arr = [];
-
-          if (Array.isArray(res)) arr = res;
-          else if (Array.isArray(res?.list)) arr = res.list;
-          else if (res?.data) {
-            arr = [
-              ...(res.data.defaultTemplates || []),
-              ...(res.data.premiumTemplates || []),
-              ...(res.data.userTemplates || []),
-              ...(res.data.templates || []),
-            ];
-          }
-
+          const arr = Array.isArray(res?.list) ? res.list : [];
           const found =
-            arr.find((t) => (t._id || t.id) === tplId) ||
-            arr.find((t) => t._id === tplId || t.id === tplId) ||
+            arr.find((t) => t.id === tplId || t.id === String(tplId)) ||
+            arr.find((t) => (t.raw?._id || t.raw?.id) === tplId) ||
             null;
 
           if (found) {
-            const img =
-              found.imageUrl ||
-              found.thumbnailUrl ||
-              found.thumbnail ||
-              found.preview ||
-              found.image ||
-              found.templateUrl ||
-              "";
-
-            setTemplateUrl(toAbsolute(img));
+            setTemplateUrl(toAbsUrl(found.imageUrl || ""));
             setTemplateMeta({
-              id: found._id || found.id,
+              id: found.id,
               name: found.name,
               desc: found.description,
               category: (found.category || "default").toLowerCase(),
             });
-
-            if (!j?.content && found.starterText) {
-              setContent(found.starterText);
-            }
+            if (!j?.content && found.starterText) setContent(found.starterText);
           } else {
             setTemplateUrl("");
             setTemplateMeta(null);
@@ -177,7 +128,6 @@ export default function JournalEditorPage() {
     })();
   }, [id, navigate, location.state]);
 
-  // Save confirm
   function onSaveClick() {
     const t = (title || "").trim();
     const c = htmlToText(content);
@@ -211,70 +161,110 @@ export default function JournalEditorPage() {
     }
   }
 
-  function cancelConfirm() {
-    setShowConfirm(false);
-  }
-
-  // AI tools
-  async function doAnalyze() {
+  // ✅ Analyze (AI) – show modal component + lưu history
+  const onAnalyze = async () => {
     if (!id) return;
-    setAiBusy(true);
     try {
       const res = await analyze({ content: htmlToText(content), journalId: id });
-      const s = res?.data?.sentiment || res?.data?.sentiment?.label || "?";
-      const kw = (res?.data?.keywords || []).slice(0, 8).join(", ");
-      alert(`Sentiment: ${s}\nKeywords: ${kw || "(none)"}`);
+      if (!res) return alert("No analysis result.");
+
+      // Lưu lịch sử để tab History có dữ liệu
+      try {
+        await saveAnalysisHistory(id, res);
+      } catch (e2) {
+        // Không chặn UI nếu lưu thất bại
+        console.warn("Save history failed:", e2?.response?.data?.message || e2?.message);
+      }
+
+      setAnalysisResult(res); // res: { emotionAnalysis, ... }
+      setShowAnalysis(true);
     } catch (e) {
       alert(e?.response?.data?.message || "Analyze failed.");
-    } finally {
-      setAiBusy(false);
     }
-  }
+  };
 
-  async function doSuggest(premium = false) {
+  const onSuggest = async () => {
     if (!id) return;
-    setAiBusy(true);
     try {
-      const fn = premium ? suggestAdvanced : suggestBasic;
-      const res = await fn({ mood, topic: "reflection", journalId: id });
-      const tips = res?.data?.suggestions || [];
-      if (!tips.length) {
-        alert("No suggestions.");
-      } else {
-        const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
-        setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
-      }
+      const res = await suggestBasic({ mood, topic: "reflection", journalId: id });
+      const tips = res?.suggestions || [];
+      if (!tips.length) return alert("No suggestions.");
+      const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
+      setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
     } catch (e) {
       alert(e?.response?.data?.message || "Suggest failed.");
-    } finally {
-      setAiBusy(false);
     }
-  }
+  };
 
-  async function doAssistant() {
+  const onSuggestPlus = async () => {
     if (!id) return;
-    const q = prompt("Ask the assistant:");
-    if (!q) return;
-    setAiBusy(true);
     try {
-      const res = await assistant({ question: q, context: { journalId: id, mood } });
-      alert(res?.data?.response || "No answer.");
+      const res = await suggestPlus({ mood, topic: "reflection", journalId: id });
+      const tips = res?.suggestions || [];
+      if (!tips.length) return alert("No suggestions.");
+      const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
+      setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
     } catch (e) {
-      alert(e?.response?.data?.message || "Assistant failed.");
+      alert(e?.response?.data?.message || "Suggest+ failed.");
+    }
+  };
+
+  // Export PDF
+  async function handleExportPDF() {
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      setExporting(true);
+      await new Promise((r) => setTimeout(r, 80));
+      const node = exportRef.current;
+      if (!node) return;
+
+      const filename = `${(title || "journal").replace(/\s+/g, "-")}.pdf`.toLowerCase();
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: null },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(node)
+        .save();
+    } catch (e) {
+      console.error(e);
+      alert("Export PDF fail.");
     } finally {
-      setAiBusy(false);
+      setExporting(false);
     }
   }
 
-  if (loading) return <div className="ed-wrap"><p>Loading...</p></div>;
+  if (loading) {
+    return (
+      <div className="ed-wrap">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="ed-wrap wide">
+    <div className={`ed-wrap wide ${locked ? "is-locked" : ""}`}>
+      {/* 🔒 Screen overlay khi AI chạy */}
+      {locked && (
+        <div className="screen-lock" aria-busy="true" aria-label="AI is working">
+          <div className="screen-lock__spinner" />
+          <div className="screen-lock__text">AI is working… please wait</div>
+        </div>
+      )}
+
       <div className="ed-header">
         <h1>Edit Journal</h1>
         <div className="ed-actions">
-          <button className="ed-btn ghost" onClick={() => navigate("/journal")}>Back</button>
-          <button className="ed-btn" onClick={onSaveClick} disabled={saving}>
+          <button className="ed-btn ghost" onClick={() => navigate("/journal")} disabled={locked || saving}>
+            Back
+          </button>
+          <button className="ed-btn ghost" onClick={handleExportPDF} disabled={locked || exporting}>
+            Export PDF
+          </button>
+          <button className="ed-btn" onClick={onSaveClick} disabled={locked || saving}>
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -285,9 +275,7 @@ export default function JournalEditorPage() {
           <div className="ed-tpl-right">
             <div className="ed-tpl-name">{templateMeta.name}</div>
             <div className="ed-tpl-desc">{templateMeta.desc || "—"}</div>
-            <span className={`ed-tpl-tag ${templateMeta.category}`}>
-              {templateMeta.category}
-            </span>
+            <span className={`ed-tpl-tag ${templateMeta.category}`}>{templateMeta.category}</span>
           </div>
         </div>
       )}
@@ -300,10 +288,16 @@ export default function JournalEditorPage() {
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          disabled={locked}
         />
 
         <div className="ed-toolbar">
-          <select className="ed-select" value={mood} onChange={(e) => setMood(e.target.value)}>
+          <select
+            className="ed-select"
+            value={mood}
+            onChange={(e) => setMood(e.target.value)}
+            disabled={locked}
+          >
             <option value="happy">{moodLabel.happy}</option>
             <option value="sad">{moodLabel.sad}</option>
             <option value="calm">{moodLabel.calm}</option>
@@ -316,9 +310,9 @@ export default function JournalEditorPage() {
           <span className="ed-meta">{info.chars} chars</span>
         </div>
 
-        {/* ✅ Editor với background FULL */}
         <div
-          className="editor-container"
+          ref={exportRef}
+          className={`editor-container no-overlay${exporting ? " exporting" : ""}`}
           style={{
             backgroundImage: templateUrl ? `url(${templateUrl})` : "none",
             backgroundSize: "cover",
@@ -327,61 +321,48 @@ export default function JournalEditorPage() {
             padding: 16,
           }}
         >
-          <div
-            className="editor-overlay"
-            style={{
-              backgroundColor: templateUrl ? "rgba(255,255,255,0.84)" : "transparent",
-              borderRadius: 12,
-              padding: 8,
-            }}
-          >
-            <ReactQuill
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              modules={editorModules}
-              formats={editorFormats}
-              placeholder="Start journaling..."
-              style={{
-                minHeight: 600,
-                borderRadius: 10,
-              }}
-            />
-          </div>
+          <h1 className="export-title">{title || "Untitled Journal"}</h1>
+
+          <ReactQuill
+            theme="snow"
+            value={content}
+            onChange={setContent}
+            modules={editorModules}
+            formats={editorFormats}
+            placeholder="Start journaling..."
+            style={{ minHeight: 600, borderRadius: 10 }}
+            readOnly={locked}     // 🔒 khóa editor khi AI đang chạy
+          />
         </div>
 
         <div className="ed-footerbar">
-          <button className="ed-btn" onClick={doAnalyze} disabled={aiBusy}>Analyze (AI)</button>
-          <button className="ed-btn ghost" onClick={() => doSuggest(false)} disabled={aiBusy}>
+          <button className="ed-btn" onClick={onAnalyze} disabled={locked || aiBusy}>
+            Analyze (AI)
+          </button>
+          <button className="ed-btn ghost" onClick={onSuggest} disabled={locked || aiBusy}>
             Suggest (AI)
           </button>
-          <button className="ed-btn ghost" onClick={() => doSuggest(true)} disabled={aiBusy}>
+          <button className="ed-btn ghost" onClick={onSuggestPlus} disabled={locked || aiBusy}>
             Suggest+ (AI)
-          </button>
-          <button className="ed-btn ghost" onClick={doAssistant} disabled={aiBusy}>
-            Ask Assistant
           </button>
         </div>
       </div>
 
-      {showConfirm && (
-        <div className="modal-backdrop" onClick={cancelConfirm}>
-          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">Save changes?</h2>
-            <p style={{ margin: "8px 0 16px", color: "#6b7280" }}>
-              Your journal will be saved and you will return to the dashboard.
-            </p>
-            <div className="modal-actions">
-              <button type="button" className="modal-btn ghost" onClick={cancelConfirm}>
-                Cancel
-              </button>
-              <button type="button" className="modal-btn" onClick={confirmSave} disabled={saving}>
-                {saving ? "Saving..." : "Yes, Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm Save */}
+      <SaveConfirmModal
+        open={showConfirm}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={confirmSave}
+        saving={saving}
+      />
+
+      {/* Modal AI (truyền journalId để tab History hoạt động) */}
+      <AnalyzeResultModal
+        open={showAnalysis}
+        data={analysisResult}
+        onClose={() => setShowAnalysis(false)}
+        journalId={id}
+      />
     </div>
   );
 }
