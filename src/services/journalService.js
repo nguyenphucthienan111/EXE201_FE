@@ -96,6 +96,7 @@ export async function analyze({ content, journalId }) {
  * Params hỗ trợ: type, page, limit, (optional) journalId
  * Trả về { list, _raw } trong đó list đã map sẵn các field thường dùng.
  */
+// src/services/journalService.js (chỉ thay hàm getAnalysisHistory)
 export async function getAnalysisHistory(
   journalId,
   { page = 1, limit = 20, type = "emotion" } = {}
@@ -106,13 +107,22 @@ export async function getAnalysisHistory(
   const { data } = await api.get("/journals/ai-analysis/history", { params });
 
   const root = data?.data ?? data ?? {};
-  const rawAnalyses = Array.isArray(root.analyses) ? root.analyses : [];
+  // fallback nhiều tên thường gặp: analyses | list | items | results | history
+  const rawAnalyses =
+    (Array.isArray(root.analyses) && root.analyses) ||
+    (Array.isArray(root.list) && root.list) ||
+    (Array.isArray(root.items) && root.items) ||
+    (Array.isArray(root.results) && root.results) ||
+    (Array.isArray(root.history) && root.history) ||
+    [];
 
   const list = rawAnalyses.map((item) => {
     const r = item?.results || {};
-    const emo = r.emotionAnalysis || item?.emotionAnalysis || {};
-    const sent = r.sentimentAnalysis || item?.sentimentAnalysis || {};
-    // Một số BE có thêm context để xem nhanh đoạn văn bản đã phân tích
+    const emo  = r.emotionAnalysis     ?? item?.emotionAnalysis     ?? {};
+    const sent = r.sentimentAnalysis   ?? item?.sentimentAnalysis   ?? {};
+    const mh   = r.mentalHealthIndicators ?? item?.mentalHealthIndicators ?? {};
+    const sug  = r.improvementSuggestions ?? item?.improvementSuggestions ?? {};
+    const kw   = r.keywords ?? item?.keywords ?? {};
     const context = item?.context || r?.context || "";
 
     return {
@@ -120,18 +130,28 @@ export async function getAnalysisHistory(
       createdAt: item?.createdAt || item?.savedAt,
       type: item?.type || "emotion",
       context,
-      // các field để UI dùng trực tiếp
+
+      // giữ ĐẦY ĐỦ object để UI cũ đọc h.emotionAnalysis / h.sentimentAnalysis
+      emotionAnalysis: emo,
+      sentimentAnalysis: sent,
+      mentalHealthIndicators: mh,
+      improvementSuggestions: sug,
+      keywords: kw,
+
+      // đồng thời cung cấp field đã flatten để UI mới xài
       primaryEmotion: emo.primaryEmotion ?? null,
-      emotionScore: typeof emo.emotionScore === "number" ? emo.emotionScore : null,
-      sentiment: sent.overallSentiment ?? null,
-      sentimentScore: typeof sent.sentimentScore === "number" ? sent.sentimentScore : null,
-      results: r,   // giữ toàn bộ block để xem chi tiết nếu cần
+      emotionScore:  typeof emo.emotionScore === "number" ? emo.emotionScore : null,
+      sentiment:     sent.overallSentiment ?? null,
+      sentimentScore:typeof sent.sentimentScore === "number" ? sent.sentimentScore : null,
+
+      results: r,
       raw: item,
     };
   });
 
   return { list, _raw: data };
 }
+
 
 /**
  * History: Lưu một kết quả phân tích mới (tùy BE)
