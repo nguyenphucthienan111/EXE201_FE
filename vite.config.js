@@ -19,7 +19,11 @@ export default defineConfig({
     commonjsOptions: {
       include: [/node_modules/],
     },
-    target: "esnext",
+    target: "es2020",
+    minify: "esbuild",
+  },
+  optimizeDeps: {
+    include: ["react-quill"],
   },
   server: {
     proxy: {
