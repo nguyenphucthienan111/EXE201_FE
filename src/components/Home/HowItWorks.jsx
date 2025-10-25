@@ -14,7 +14,7 @@ export default function HowItWorks() {
         <div className="hiw__grid">
           <div className="hiw-card">
             <div className="hiw-card__icon">
-              <img src="/assets/interface.png" alt="" />
+              <img src="/interface.png" alt="" />
             </div>
             <div className="hiw-card__body">
               <h3 className="hiw-card__title">Simple Interface</h3>
@@ -27,7 +27,7 @@ export default function HowItWorks() {
 
           <div className="hiw-card">
             <div className="hiw-card__icon">
-              <img src="/assets/insights.png" alt="" />
+              <img src="/insights.png" alt="" />
             </div>
             <div className="hiw-card__body">
               <h3 className="hiw-card__title">Insights & Trends</h3>

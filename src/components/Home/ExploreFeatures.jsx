@@ -21,13 +21,11 @@ export default function ExploreFeatures() {
           <div className="explore-card">
             <img src="/src/assets/reminder.png" alt="Daily Reminders" />
             <h3 className="explore-card__title">Daily Reminders</h3>
-            <p className="explore-card__desc">
-              Get gentle nudges to journal.
-            </p>
+            <p className="explore-card__desc">Get gentle nudges to journal.</p>
           </div>
 
           <div className="explore-card">
-            <img src="/src/assets/insights.png" alt="Mood Insights" />
+            <img src="/insights.png" alt="Mood Insights" />
             <h3 className="explore-card__title">Mood Insights</h3>
             <p className="explore-card__desc">
               Visualize your emotional journey.

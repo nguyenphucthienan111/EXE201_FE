@@ -34,7 +34,9 @@ export default function Footer() {
       <hr className="ft-divider" />
 
       <div className="ft-bottom">
-        <span>© {new Date().getFullYear()} Everquill. All rights reserved.</span>
+        <span>
+          © {new Date().getFullYear()} Everquill. All rights reserved.
+        </span>
         <nav className="ft-legal">
           <a href="#">Privacy</a>
           <a href="#">Terms</a>
