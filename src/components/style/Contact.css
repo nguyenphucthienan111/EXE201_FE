@@ -1,37 +1,39 @@
-:root{
-  --purple:#6f5aa7;     /* tiêu đề */
-  --purple-2:#8e7ec1;   /* mô tả/label */
-  --btn:#8f79d0;
-  --btn-hover:#8f79d0;
-  --line:#ebe5f8;
+:root {
+  --purple: #6f5aa7; /* tiêu đề */
+  --purple-2: #8e7ec1; /* mô tả/label */
+  --btn: #8f79d0;
+  --btn-hover: #8f79d0;
+  --line: #ebe5f8;
 }
 
 /* Trang */
-.contact{
-  background:#fff;
-  color:var(--purple);
-  font-family:"Poppins","Segoe UI",Arial,sans-serif;
+.contact {
+  background: #fff;
+  color: var(--purple);
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
 }
 
 /* ===== HERO ===== */
-.contact-hero{
+.contact-hero {
   max-width: 1120px;
   margin: 32px auto 16px;
   padding: 0 20px;
-  text-align:center;
+  text-align: center;
 }
-.contact-hero h1{
-  font-size: 2.4rem;        /* nhỏ lại cho thanh thoát */
+.contact-hero h1 {
+  font-size: 2.4rem; /* nhỏ lại cho thanh thoát */
   font-weight: 700;
   margin: 0 0 8px;
 }
-.contact-hero p{
+.contact-hero p {
   margin: 0 0 18px;
   color: var(--purple-2);
 }
 
-.contact-actions{
-  display:flex; gap:14px; justify-content:center;
+.contact-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
 }
 
 /* Buttons */
@@ -43,7 +45,7 @@
 }
 
 .cta-buttons button {
-  min-width: 180px;        /* chiều rộng tối thiểu giống nhau */
+  min-width: 180px; /* chiều rộng tối thiểu giống nhau */
   padding: 10px 40px;
   font-size: 13px;
   font-weight: 600;
@@ -73,11 +75,12 @@
   background-color: #6a4fb5;
 }
 
-
 /* Đường kẻ mảnh */
-.contact-rule{
-  border:0; height:1px; background:var(--line);
-  max-width: 920px;           /* vừa mắt như ảnh */
+.contact-rule {
+  border: 0;
+  height: 1px;
+  background: var(--line);
+  max-width: 920px; /* vừa mắt như ảnh */
   margin: 22px auto 0;
 }
 
@@ -87,10 +90,10 @@
   margin: 3rem auto;
   max-width: 1000px;
 }
-.contact-form h2{
-  font-size:2rem;
-  font-weight:700;
-  margin:0 0 12px;
+.contact-form h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 12px;
 }
 
 .form {
@@ -113,17 +116,25 @@
   text-align: left;
 }
 
-.form-group input {
+.form-group input,
+.form-group textarea {
   padding: 0.8rem;
   border: 1px solid #e2d9f3;
   border-radius: 10px;
   outline: none;
   transition: all 0.3s ease;
+  font-family: inherit;
+  resize: vertical;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group textarea:focus {
   border-color: #7c4dff;
   box-shadow: 0 0 8px rgba(124, 77, 255, 0.3);
+}
+
+.form-group textarea {
+  min-height: 100px;
 }
 
 .send-btn {
@@ -141,46 +152,73 @@
   background: #6a3ed9;
 }
 
-
-/* 3 cột: Name / Email / Message */
-.form-grid{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px 40px;
-  text-align:left;
+.send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
-.field label{
-  display:block;
-  font-size:.92rem;
-  font-weight:700;
-  color:var(--purple-2);
+/* Alert Messages */
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+/* 3 cột: Name / Email / Message */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 40px;
+  text-align: left;
+}
+
+.field label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--purple-2);
   margin: 0 0 8px;
 }
 
-.field input{
-  width:100%;
-  height: 44px;               /* cùng chiều cao cho 3 ô */
+.field input {
+  width: 100%;
+  height: 44px; /* cùng chiều cao cho 3 ô */
   padding: 0 14px;
-  border:1px solid var(--line);
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background:#fff;
-  color:var(--purple);
-  outline:none;
-  box-shadow: inset 0 2px 6px rgba(30,20,60,.04);
+  background: #fff;
+  color: var(--purple);
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(30, 20, 60, 0.04);
 }
-.field input::placeholder{ color:#b7aedc }
+.field input::placeholder {
+  color: #b7aedc;
+}
 
 /* Nút gửi */
-.form-actions{
-  grid-column:1 / -1;
-  display:flex; justify-content:center;
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
   margin-top: 4px;
 }
-.btn.big{
+.btn.big {
   padding: 13px 34px;
-  border-radius: 999px;        /* pill */
-  box-shadow:0 10px 22px rgba(143,121,208,.18);
+  border-radius: 999px; /* pill */
+  box-shadow: 0 10px 22px rgba(143, 121, 208, 0.18);
 }
 .support-section {
   text-align: center;
@@ -247,39 +285,92 @@
   color: #5d3d8b;
 }
 /* ===== Modal ===== */
-.modal-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.35);
-  display:flex; align-items:center; justify-content:center; z-index:1000;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
-.modal{
-  width:min(720px, 92vw); max-height:85vh; overflow:auto;
-  background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
-  animation:pop .15s ease-out;
+.modal {
+  width: min(720px, 92vw);
+  max-height: 85vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: pop 0.15s ease-out;
 }
-@keyframes pop{ from{ transform:scale(.98); opacity:.8 } to{ transform:scale(1); opacity:1 } }
-.modal__header{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:16px 20px; border-bottom:1px solid #eee;
+@keyframes pop {
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-.modal__header h3{ margin:0; color:#6f5aa7; font-weight:700;font-size: 1.5rem; }
-.modal__close{ background:none; border:none; font-size:24px; line-height:1; cursor:pointer; color:#6f5aa7; }
-.modal__body{ padding:16px 20px 20px; }
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+.modal__header h3 {
+  margin: 0;
+  color: #6f5aa7;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6f5aa7;
+}
+.modal__body {
+  padding: 16px 20px 20px;
+}
 
 /* ===== FAQ items (dùng cho modal & accordion) ===== */
-.faq-list{ display:grid; gap:10px; }
-.faq-item{
-  border:1px solid #ebe5f8; border-radius:10px; overflow:hidden; background:#fff;
+.faq-list {
+  display: grid;
+  gap: 10px;
 }
-.faq-q{
-  list-style:none; padding:14px 16px; cursor:pointer; color:#5d3d8b; font-weight:700;
+.faq-item {
+  border: 1px solid #ebe5f8;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
 }
-.faq-q::-webkit-details-marker{ display:none; }
-.faq-item[open] .faq-q{ background:#faf7ff; }
-.faq-a{ padding:0 16px 14px; color:#7a67aa; line-height:1.55; }
-
-
+.faq-q {
+  list-style: none;
+  padding: 14px 16px;
+  cursor: pointer;
+  color: #5d3d8b;
+  font-weight: 700;
+}
+.faq-q::-webkit-details-marker {
+  display: none;
+}
+.faq-item[open] .faq-q {
+  background: #faf7ff;
+}
+.faq-a {
+  padding: 0 16px 14px;
+  color: #7a67aa;
+  line-height: 1.55;
+}
 
 /* Responsive */
-@media (max-width: 980px){
-  .form-grid{ grid-template-columns: 1fr; }
+@media (max-width: 980px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }

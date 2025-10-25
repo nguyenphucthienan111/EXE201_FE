@@ -4,10 +4,20 @@ import Modal from "./Modal";
 import phoneIcon from "/phone.png";
 import counselingIcon from "/counseling.png";
 import webIcon from "/web.png";
+import contactService from "../../services/contactService";
 
 export default function Contact() {
   // mở/đóng Modal FAQ
   const [faqOpen, setFaqOpen] = useState(false);
+
+  // Contact form state
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
 
   const faqs = [
     {
@@ -23,6 +33,33 @@ export default function Contact() {
       a: "Có. Nhật ký và phân tích AI được mã hóa khi truyền và khi lưu trữ, đảm bảo quyền riêng tư.",
     },
   ];
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      await contactService.sendMessage(formData);
+      setSubmitStatus("success");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("Contact form error:", error);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="contact">
@@ -48,30 +85,64 @@ export default function Contact() {
       {/* FORM */}
       <section className="contact-form">
         <h2>Contact Us</h2>
-        <form className="form" onSubmit={(e) => e.preventDefault()}>
+
+        {/* Success/Error Messages */}
+        {submitStatus === "success" && (
+          <div className="alert alert-success">
+            <p>✅ Thank you for your message! We will get back to you soon.</p>
+          </div>
+        )}
+
+        {submitStatus === "error" && (
+          <div className="alert alert-error">
+            <p>❌ Failed to send message. Please try again later.</p>
+          </div>
+        )}
+
+        <form className="form" onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="name">Name</label>
-              <input type="text" id="name" placeholder="Enter your name" />
+              <input
+                type="text"
+                id="name"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                disabled={isSubmitting}
+              />
             </div>
 
             <div className="form-group">
               <label htmlFor="email">Email</label>
-              <input type="email" id="email" placeholder="Enter your email" />
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                disabled={isSubmitting}
+              />
             </div>
 
             <div className="form-group">
               <label htmlFor="message">Message</label>
-              <input
-                type="text"
+              <textarea
                 id="message"
                 placeholder="Type your message here"
+                value={formData.message}
+                onChange={handleInputChange}
+                required
+                disabled={isSubmitting}
+                rows="4"
               />
             </div>
           </div>
 
-          <button type="submit" className="send-btn">
-            Send Message
+          <button type="submit" className="send-btn" disabled={isSubmitting}>
+            {isSubmitting ? "Sending..." : "Send Message"}
           </button>
         </form>
       </section>

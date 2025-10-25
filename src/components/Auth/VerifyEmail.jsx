@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { verifyEmail } from "../../services/authService";
 import "../style/AuthPage.css";
+import EmailNotification from "../common/EmailNotification";
+import "../style/EmailNotification.css";
 
 function useQuery() {
   const { search } = useLocation();
@@ -17,12 +19,20 @@ const VerifyEmail = () => {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showEmailNotification, setShowEmailNotification] = useState(false);
 
   // Lấy email từ localStorage nếu chưa có trên URL
   useEffect(() => {
     if (!email) {
       const pending = localStorage.getItem("pending_verify_email");
       if (pending) setEmail(pending);
+    }
+  }, [email]);
+
+  // Hiển thị thông báo email khi component mount
+  useEffect(() => {
+    if (email) {
+      setShowEmailNotification(true);
     }
   }, [email]);
 
@@ -53,6 +63,10 @@ const VerifyEmail = () => {
     }
   };
 
+  const handleCloseEmailNotification = () => {
+    setShowEmailNotification(false);
+  };
+
   return (
     <div className="auth-root">
       <div className="auth-card">
@@ -63,7 +77,7 @@ const VerifyEmail = () => {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e)=>setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <input
@@ -71,7 +85,7 @@ const VerifyEmail = () => {
             type="text"
             placeholder="Verification code"
             value={code}
-            onChange={(e)=>setCode(e.target.value)}
+            onChange={(e) => setCode(e.target.value)}
             required
           />
           <button className="auth-btn" type="submit" disabled={loading}>
@@ -86,6 +100,13 @@ const VerifyEmail = () => {
           <a href="/login">← Back to Login</a>
         </div>
       </div>
+
+      {/* Email Notification */}
+      <EmailNotification
+        isVisible={showEmailNotification}
+        email={email}
+        onClose={handleCloseEmailNotification}
+      />
     </div>
   );
 };

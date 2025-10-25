@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
 import { login, register, loginWithGoogle } from "../../services/authService";
+import EmailNotification from "../common/EmailNotification";
+import "../style/EmailNotification.css";
 
 function decodeJwtRole(token) {
   try {
@@ -39,6 +41,8 @@ const LoginPage = () => {
   const [registerError, setRegisterError] = useState("");
   const [registerSuccess, setRegisterSuccess] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [showEmailNotification, setShowEmailNotification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const handleRegisterClick = () => {
     containerRef.current?.classList.add("login-active");
@@ -72,18 +76,19 @@ const LoginPage = () => {
       const data = await register({ email: regEmail, password: regPassword });
       const msg =
         data?.message ||
-        "Registration successful. Please check your email for the verification code.";
+        "Registration successful! Please check your email (including spam folder) for the verification code.";
       setRegisterSuccess(msg);
 
       localStorage.setItem("pending_verify_email", regEmail);
+      setRegisteredEmail(regEmail);
+      setShowEmailNotification(true);
 
       setRegEmail("");
       setRegPassword("");
       setRegConfirm("");
 
-      setTimeout(() => {
-        navigate(`/verify?email=${encodeURIComponent(regEmail)}`);
-      }, 800);
+      // Navigate to verify page immediately
+      navigate(`/verify?email=${encodeURIComponent(regEmail)}`);
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -113,7 +118,10 @@ const LoginPage = () => {
 
       // Chuẩn hóa dữ liệu backend
       const token =
-        data?.token || data?.accessToken || data?.data?.token || data?.data?.accessToken;
+        data?.token ||
+        data?.accessToken ||
+        data?.data?.token ||
+        data?.data?.accessToken;
       const refresh = data?.refreshToken || data?.data?.refreshToken;
       const userObj = data?.user || data?.data?.user || {};
 
@@ -126,7 +134,9 @@ const LoginPage = () => {
       } else if (data?.data?.role) {
         role = String(data.data.role).toLowerCase();
       } else if (Array.isArray(userObj?.roles)) {
-        role = userObj.roles.map((r) => String(r).toLowerCase()).includes("admin")
+        role = userObj.roles
+          .map((r) => String(r).toLowerCase())
+          .includes("admin")
           ? "admin"
           : "user";
       } else if (userObj?.isAdmin) {
@@ -178,9 +188,21 @@ const LoginPage = () => {
     loginWithGoogle();
   };
 
+  const handleCloseEmailNotification = () => {
+    setShowEmailNotification(false);
+    // Navigate to verify page when user closes notification
+    if (registeredEmail) {
+      navigate(`/verify?email=${encodeURIComponent(registeredEmail)}`);
+    }
+  };
+
   return (
     <div className="login-root">
-      <button className="login-back-home-btn" onClick={handleBackHome} type="button">
+      <button
+        className="login-back-home-btn"
+        onClick={handleBackHome}
+        type="button"
+      >
         ← Back to Home
       </button>
 
@@ -227,8 +249,16 @@ const LoginPage = () => {
             </button>
 
             <div className="login-notification-area">
-              {loginError && <div className="login-token-notice login-error">{loginError}</div>}
-              {loginSuccess && <div className="login-token-notice login-success">{loginSuccess}</div>}
+              {loginError && (
+                <div className="login-token-notice login-error">
+                  {loginError}
+                </div>
+              )}
+              {loginSuccess && (
+                <div className="login-token-notice login-success">
+                  {loginSuccess}
+                </div>
+              )}
             </div>
           </form>
         </div>
@@ -267,14 +297,24 @@ const LoginPage = () => {
               />
               <i className="bx bxs-lock-alt"></i>
             </div>
-            <button type="submit" className="login-btn" disabled={registerLoading}>
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={registerLoading}
+            >
               {registerLoading ? "Registering..." : "Register"}
             </button>
 
             <div className="login-notification-area">
-              {registerError && <div className="login-token-notice login-error">{registerError}</div>}
+              {registerError && (
+                <div className="login-token-notice login-error">
+                  {registerError}
+                </div>
+              )}
               {registerSuccess && (
-                <div className="login-token-notice login-success">{registerSuccess}</div>
+                <div className="login-token-notice login-success">
+                  {registerSuccess}
+                </div>
               )}
             </div>
           </form>
@@ -296,12 +336,23 @@ const LoginPage = () => {
           <div className="login-toggle-panel login-toggle-right">
             <h1>Welcome Back!</h1>
             <p>Already have an account?</p>
-            <button className="login-btn" type="button" onClick={handleLoginClick}>
+            <button
+              className="login-btn"
+              type="button"
+              onClick={handleLoginClick}
+            >
               Login
             </button>
           </div>
         </div>
       </div>
+
+      {/* Email Notification */}
+      <EmailNotification
+        isVisible={showEmailNotification}
+        email={registeredEmail}
+        onClose={handleCloseEmailNotification}
+      />
     </div>
   );
 };

@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 :root {
-  --primary: #8666e0;       /* tím khoai môn */
+  --primary: #8666e0; /* tím khoai môn */
   --primary-600: #6f5aa7;
   --primary-700: #6f5aa7;
-  --primary-200: #EDE7F6;
+  --primary-200: #ede7f6;
   --text: #333;
 }
 
