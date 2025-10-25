@@ -21,6 +21,7 @@ export default defineConfig({
     },
     target: "es2020",
     minify: "esbuild",
+    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ["react-quill"],

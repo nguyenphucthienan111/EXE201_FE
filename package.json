@@ -36,6 +36,9 @@
     "vite": "^5.4.1"
   },
   "overrides": {
-    "rollup": "^4.52.2"
+    "rollup": "^4.9.0"
+  },
+  "resolutions": {
+    "@rollup/rollup-linux-x64-gnu": "^4.9.0"
   }
 }
