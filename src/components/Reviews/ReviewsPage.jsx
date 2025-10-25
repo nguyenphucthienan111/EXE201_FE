@@ -1,11 +1,22 @@
 // src/components/Reviews/ReviewsPage.jsx
 import { useEffect, useState, useMemo } from "react";
-import { getPublicReviews, getMyReview, submitReview } from "../../services/reviewService";
+import {
+  getPublicReviews,
+  getMyReview,
+  submitReview,
+} from "../../services/reviewService";
 import "../style/Reviews.css";
 
 /* ---------- Accessible Star Button ---------- */
 // eslint-disable-next-line react/prop-types
-function Star({ filled, onClick, onMouseEnter, onMouseLeave, size = 22, index }) {
+function Star({
+  filled,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+  size = 22,
+  index,
+}) {
   return (
     <button
       type="button"
@@ -47,7 +58,9 @@ function Stars({ value, onChange, size = 22, compact = false }) {
           />
         );
       })}
-      {!compact && value ? <span className="stars__label">{value}/5</span> : null}
+      {!compact && value ? (
+        <span className="stars__label">{value}/5</span>
+      ) : null}
     </div>
   );
 }
@@ -59,7 +72,9 @@ function reviewId(r) {
 function makeFallbackKey(r) {
   const txt = (r?.feedback || "").trim();
   const rating = Number(r?.rating) || 0;
-  const ts = r?.createdAt ? new Date(r.createdAt).toISOString().slice(0, 19) : "";
+  const ts = r?.createdAt
+    ? new Date(r.createdAt).toISOString().slice(0, 19)
+    : "";
   return `${txt}|${rating}|${ts}`;
 }
 function dedupeReviews(list) {
@@ -82,6 +97,8 @@ export default function ReviewsPage() {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingList, setLoadingList] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
 
   // my review
   const [my, setMy] = useState(null);
@@ -93,13 +110,7 @@ export default function ReviewsPage() {
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Stats theo toàn bộ (trước khi lọc mình/dup)
-  const avgRating = useMemo(() => {
-    const base = items?.length ? items : [];
-    if (!base.length) return null;
-    const sum = base.reduce((s, r) => s + (Number(r.rating) || 0), 0);
-    return Math.round((sum / base.length) * 10) / 10;
-  }, [items]);
+  // Average rating is now fetched from backend
 
   // Danh sách công khai sau khi khử trùng lặp + ẩn review của chính mình
   const publicItems = useMemo(() => {
@@ -130,12 +141,11 @@ export default function ReviewsPage() {
           !!d?.hasReview ||
           !!d?.review ||
           (Array.isArray(d?.reviews) && d.reviews.length > 0) ||
-          !!d?._id || !!d?.id;
+          !!d?._id ||
+          !!d?.id;
 
         const review =
-          d?.review ||
-          (Array.isArray(d?.reviews) ? d.reviews[0] : d) ||
-          null;
+          d?.review || (Array.isArray(d?.reviews) ? d.reviews[0] : d) || null;
 
         setHasMy(!!hasReview);
         setMy(review || null);
@@ -160,9 +170,20 @@ export default function ReviewsPage() {
       setLoadingList(true);
       const res = await getPublicReviews({ limit: PAGE_SIZE, skip });
       const d = res?.data ?? {};
-      const list = Array.isArray(d.reviews) ? d.reviews : Array.isArray(d) ? d : [];
+      const list = Array.isArray(d.reviews)
+        ? d.reviews
+        : Array.isArray(d)
+        ? d
+        : [];
       setItems((prev) => dedupeReviews([...prev, ...list]));
       setSkip((prev) => prev + list.length);
+      // Set total count and average rating from backend
+      if (typeof d.totalCount === "number") {
+        setTotalCount(d.totalCount);
+      }
+      if (typeof d.avgRating === "number") {
+        setAvgRating(d.avgRating);
+      }
       // Nếu BE không trả hasMore thì suy luận theo PAGE_SIZE
       setHasMore(
         typeof d.hasMore === "boolean" ? d.hasMore : list.length === PAGE_SIZE
@@ -203,7 +224,8 @@ export default function ReviewsPage() {
       window.dispatchEvent(new CustomEvent("review:submitted"));
     } catch (err) {
       const s = err?.response?.status;
-      const m = err?.response?.data?.message || err?.message || "Submit failed.";
+      const m =
+        err?.response?.data?.message || err?.message || "Submit failed.";
       if (s === 400) {
         alert(m || "You have already submitted a review.");
         setHasMy(true);
@@ -224,7 +246,10 @@ export default function ReviewsPage() {
         <div className="reviews-container">
           <div className="reviews-hero__content">
             <h1>Share Your Thoughts</h1>
-            <p>Your feedback helps us build a more delightful journaling experience.</p>
+            <p>
+              Your feedback helps us build a more delightful journaling
+              experience.
+            </p>
             <div className="reviews-hero__stats">
               <div className="stat">
                 <div className="stat__title">Average Rating</div>
@@ -240,7 +265,7 @@ export default function ReviewsPage() {
               </div>
               <div className="stat">
                 <div className="stat__title">Total Reviews</div>
-                <div className="stat__value">{publicItems.length || "—"}</div>
+                <div className="stat__value">{totalCount || "—"}</div>
               </div>
             </div>
           </div>
@@ -322,9 +347,15 @@ export default function ReviewsPage() {
             <h2>What others say</h2>
           </div>
 
-          <div className="grid" style={{ maxWidth: CARD_MAX, margin: "0 auto" }}>
+          <div
+            className="grid"
+            style={{ maxWidth: CARD_MAX, margin: "0 auto" }}
+          >
             {publicItems.map((r, idx) => (
-              <article key={reviewId(r) || makeFallbackKey(r) || idx} className="card">
+              <article
+                key={reviewId(r) || makeFallbackKey(r) || idx}
+                className="card"
+              >
                 <div className="card__body">
                   <Stars value={r.rating} size={16} compact />
                   <p className="card__text">{r.feedback}</p>
@@ -336,9 +367,16 @@ export default function ReviewsPage() {
             ))}
           </div>
 
-          <div className="loadmore" style={{ maxWidth: CARD_MAX, margin: "0 auto" }}>
+          <div
+            className="loadmore"
+            style={{ maxWidth: CARD_MAX, margin: "0 auto" }}
+          >
             {hasMore ? (
-              <button className="btn btn-secondary" onClick={loadMore} disabled={loadingList}>
+              <button
+                className="btn btn-secondary"
+                onClick={loadMore}
+                disabled={loadingList}
+              >
                 {loadingList ? "Loading…" : "Load more"}
               </button>
             ) : publicItems.length === 0 ? (

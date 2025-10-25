@@ -44,8 +44,22 @@ const LoginPage = () => {
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
 
+  // Password visibility states
+  const [showPasswords, setShowPasswords] = useState({
+    login: false,
+    register: false,
+    confirm: false,
+  });
+
   const handleRegisterClick = () => {
     containerRef.current?.classList.add("login-active");
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
 
   const handleLoginClick = () => {
@@ -147,8 +161,6 @@ const LoginPage = () => {
         if (jwtRole) role = jwtRole;
       }
 
-      console.log("DEBUG login -> role:", role, "user:", userObj);
-
       if (token) {
         localStorage.setItem("token", token);
         localStorage.setItem("access_token", token); // lưu thêm cho chắc
@@ -223,13 +235,20 @@ const LoginPage = () => {
             </div>
             <div className="login-input-box">
               <input
-                type="password"
+                type={showPasswords.login ? "text" : "password"}
                 placeholder="Password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
               />
               <i className="bx bxs-lock-alt"></i>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePasswordVisibility("login")}
+              >
+                {showPasswords.login ? "👁️" : "👁️‍🗨️"}
+              </button>
             </div>
             <div className="login-forgot-link">
               <a href="/forgot-password">Forgot password?</a>
@@ -279,23 +298,37 @@ const LoginPage = () => {
             </div>
             <div className="login-input-box">
               <input
-                type="password"
+                type={showPasswords.register ? "text" : "password"}
                 placeholder="Password"
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 required
               />
               <i className="bx bxs-lock-alt"></i>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePasswordVisibility("register")}
+              >
+                {showPasswords.register ? "👁️" : "👁️‍🗨️"}
+              </button>
             </div>
             <div className="login-input-box">
               <input
-                type="password"
+                type={showPasswords.confirm ? "text" : "password"}
                 placeholder="Confirm password"
                 value={regConfirm}
                 onChange={(e) => setRegConfirm(e.target.value)}
                 required
               />
               <i className="bx bxs-lock-alt"></i>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePasswordVisibility("confirm")}
+              >
+                {showPasswords.confirm ? "👁️" : "👁️‍🗨️"}
+              </button>
             </div>
             <button
               type="submit"

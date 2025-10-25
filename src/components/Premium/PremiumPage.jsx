@@ -64,7 +64,9 @@ export default function Pricing() {
       if (sttRes?.data) setStatus((s) => ({ ...s, ...sttRes.data }));
     } catch (e) {
       const m =
-        e?.response?.data?.message || e?.message || "Failed to load payment status.";
+        e?.response?.data?.message ||
+        e?.message ||
+        "Failed to load payment status.";
       setErr(m);
     } finally {
       setLoading(false);
@@ -179,7 +181,9 @@ export default function Pricing() {
       <section className="prx-hero">
         <div className="prx-chip">Pricing</div>
         <h1>Upgrade your journaling experience</h1>
-        <p>Powerful AI features, clear insights and a calm, focused writing flow.</p>
+        <p>
+          Powerful AI features, clear insights and a calm, focused writing flow.
+        </p>
 
         {loading ? (
           <div className="prx-note">Loading payment status…</div>
@@ -191,25 +195,28 @@ export default function Pricing() {
                 You’re on <b>Premium</b>. Thank you! 🎉
               </div>
             )}
-            {plan !== "premium" && status.hasActivePayment && !status.paymentExpired && (
-              <div className="prx-note">
-                You have a pending payment. {timeLeftText && <b>{timeLeftText}</b>}{" "}
-                <button
-                  className="prx-inline-btn"
-                  onClick={resumeOrCreate}
-                  disabled={actionLoading || loading}
-                >
-                  Continue payment
-                </button>
-                <button
-                  className="prx-inline-btn ghost"
-                  onClick={onResetPending}
-                  disabled={actionLoading || loading}
-                >
-                  Reset
-                </button>
-              </div>
-            )}
+            {plan !== "premium" &&
+              status.hasActivePayment &&
+              !status.paymentExpired && (
+                <div className="prx-note">
+                  You have a pending payment.{" "}
+                  {timeLeftText && <b>{timeLeftText}</b>}{" "}
+                  <button
+                    className="prx-inline-btn"
+                    onClick={resumeOrCreate}
+                    disabled={actionLoading || loading}
+                  >
+                    Continue payment
+                  </button>
+                  <button
+                    className="prx-inline-btn ghost"
+                    onClick={onResetPending}
+                    disabled={actionLoading || loading}
+                  >
+                    Reset
+                  </button>
+                </div>
+              )}
           </>
         )}
       </section>
@@ -239,7 +246,11 @@ export default function Pricing() {
             {plan === "free" ? (
               <span
                 className="prx-btn ghost"
-                style={{ pointerEvents: "none", cursor: "default", opacity: 0.7 }}
+                style={{
+                  pointerEvents: "none",
+                  cursor: "default",
+                  opacity: 0.7,
+                }}
                 aria-disabled="true"
               >
                 Your current plan
@@ -314,9 +325,21 @@ export default function Pricing() {
       <section className="prx-why">
         <h2>Why choose us</h2>
         <div className="prx-why-grid">
-          <WhyItem emoji="🔒" title="Private by design" text="Your entries are encrypted in transit and at rest." />
-          <WhyItem emoji="⚡" title="Fast & reliable" text="Snappy editor with autosave and offline tolerance." />
-          <WhyItem emoji="🎯" title="Built for clarity" text="Actionable insights, not noisy dashboards." />
+          <WhyItem
+            emoji="🔒"
+            title="Private by design"
+            text="Your entries are encrypted in transit and at rest."
+          />
+          <WhyItem
+            emoji="⚡"
+            title="Fast & reliable"
+            text="Snappy editor with autosave and offline tolerance."
+          />
+          <WhyItem
+            emoji="🎯"
+            title="Built for clarity"
+            text="Actionable insights, not noisy dashboards."
+          />
         </div>
       </section>
     </div>
@@ -343,9 +366,21 @@ WhyItem.propTypes = {
 
 function CheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="prx-check">
-      <path d="M20 7L9 18l-5-5" fill="none" stroke="currentColor" strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="prx-check"
+    >
+      <path
+        d="M20 7L9 18l-5-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
