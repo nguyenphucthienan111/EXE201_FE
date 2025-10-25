@@ -10,7 +10,11 @@ import {
   analyze,
   markSynced,
 } from "../../services/journalService";
-import { getTemplates, useTemplate as applyTemplate } from "../../services/templateService";
+import api from "../../services/api";
+import {
+  getTemplates,
+  useTemplate as applyTemplate,
+} from "../../services/templateService";
 
 const moodOptions = [
   { id: "happy", label: "😊 Happy" },
@@ -154,7 +158,9 @@ export default function JournalEntriesPage() {
     if (typeof userPlan === "boolean") return userPlan;
     if (userPlan && typeof userPlan === "object") {
       if (userPlan.isPremiumActive === true) return true;
-      const hint = [userPlan.tier, userPlan.plan, userPlan.name].filter(Boolean).join(" ");
+      const hint = [userPlan.tier, userPlan.plan, userPlan.name]
+        .filter(Boolean)
+        .join(" ");
       if (hint) return /premium/i.test(hint);
     }
     return null;
@@ -172,7 +178,9 @@ export default function JournalEntriesPage() {
       setIsPremiumActive(inferPremiumFromUserPlan(res?.userPlan));
 
       if (list.length === 0) {
-        setTemplatesError("No templates available. (Check /api/templates response & baseURL /api)");
+        setTemplatesError(
+          "No templates available. (Check /api/templates response & baseURL /api)"
+        );
       }
     } catch (e) {
       console.error("Failed to load templates", e);
@@ -202,7 +210,9 @@ export default function JournalEntriesPage() {
           title: formTitle,
           mood: formMood,
         });
-        setEntries((prev) => prev.map((x) => (x._id === editing._id ? updated : x)));
+        setEntries((prev) =>
+          prev.map((x) => (x._id === editing._id ? updated : x))
+        );
         setShowModal(false);
       } else {
         if (useTemplate && !selectedTemplateId) {
@@ -212,7 +222,10 @@ export default function JournalEntriesPage() {
         }
 
         // 1) Tạo journal KHÔNG gửi templateId (để tách bước apply)
-        const created = await createJournal({ title: formTitle, mood: formMood });
+        const created = await createJournal({
+          title: formTitle,
+          mood: formMood,
+        });
         const newId =
           created?._id ||
           created?.id ||
@@ -253,7 +266,8 @@ export default function JournalEntriesPage() {
       }
     } catch (err) {
       const s = err?.response?.status;
-      const m = err?.response?.data?.message || err?.message || "Failed to save.";
+      const m =
+        err?.response?.data?.message || err?.message || "Failed to save.";
       if (s === 403) alert(m || "Free plan daily limit reached.");
       else alert(m);
     } finally {
@@ -272,19 +286,30 @@ export default function JournalEntriesPage() {
     }
   };
 
-  // Analyze entry
-  async function runAnalyze(entry) {
+  // View AI analysis history
+  const [showAIHistory, setShowAIHistory] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [aiHistory, setAiHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  async function viewAIHistory(entry) {
+    setSelectedEntry(entry);
+    setShowAIHistory(true);
+    setLoadingHistory(true);
+
     try {
-      const res = await analyze({ content: entry.content, journalId: entry._id });
-      const sentiment = res?.data?.sentiment || "?";
-      const keywords = (res?.data?.keywords || []).slice(0, 6).join(", ");
-      alert(`Sentiment: ${sentiment}\nKeywords: ${keywords || "(none)"}`);
+      // Use journalService to get AI analysis history
+      const { data } = await api.get(`/journals/${entry._id}/analysis-history`);
+      setAiHistory(data.analyses || []);
     } catch (e) {
-      alert(e?.response?.data?.message || "Analyze failed");
+      console.error("Failed to load AI history:", e);
+      setAiHistory([]);
+    } finally {
+      setLoadingHistory(false);
     }
   }
 
-  // Mark synced
+  // Mark synced - đánh dấu journal đã được đồng bộ với thiết bị khác
   async function doMarkSynced(id) {
     try {
       await markSynced(id);
@@ -310,12 +335,13 @@ export default function JournalEntriesPage() {
           />
         </div>
 
-        <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div
+          style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}
+        >
           <button className="jr-btn" onClick={() => openModal()}>
             + Create New Journal
           </button>
           {/* NEW: Continue Writing entry gần nhất */}
-          
         </div>
       </section>
 
@@ -344,7 +370,11 @@ export default function JournalEntriesPage() {
                   className={`jr-chip ${dateFilter === df ? "is-active" : ""}`}
                   onClick={() => setDateFilter(df)}
                 >
-                  {df === "today" ? "Today" : df === "week" ? "This Week" : "This Month"}
+                  {df === "today"
+                    ? "Today"
+                    : df === "week"
+                    ? "This Week"
+                    : "This Month"}
                 </button>
               ))}
             </div>
@@ -356,7 +386,9 @@ export default function JournalEntriesPage() {
               {moodOptions.map((m) => (
                 <button
                   key={m.id}
-                  className={`jr-chip ${moods.includes(m.id) ? "is-active" : ""}`}
+                  className={`jr-chip ${
+                    moods.includes(m.id) ? "is-active" : ""
+                  }`}
                   onClick={() => toggleMood(m.id)}
                 >
                   {m.label}
@@ -374,7 +406,8 @@ export default function JournalEntriesPage() {
 
         {!loading && filtered.length === 0 && (
           <div className="jr-empty">
-            No entries yet. Click <strong>“+ Create New Journal”</strong> to add your first one!
+            No entries yet. Click <strong>“+ Create New Journal”</strong> to add
+            your first one!
           </div>
         )}
 
@@ -385,12 +418,16 @@ export default function JournalEntriesPage() {
               <div className="jr-card-body">
                 <h4 className="jr-card-title">{e.title}</h4>
                 <p className="jr-card-excerpt">
-                  {e.content?.length > 100 ? e.content.slice(0, 100) + "..." : e.content}
+                  {e.content?.length > 100
+                    ? e.content.slice(0, 100) + "..."
+                    : e.content}
                 </p>
                 <div className="jr-card-meta">
                   <span className={`jr-mood ${e.mood}`}>{e.mood}</span>
                   <span style={{ marginLeft: 8, opacity: 0.7, fontSize: 12 }}>
-                    {new Date(e.updatedAt || e.createdAt || Date.now()).toLocaleString()}
+                    {new Date(
+                      e.updatedAt || e.createdAt || Date.now()
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div className="jr-card-footer">
@@ -399,14 +436,21 @@ export default function JournalEntriesPage() {
                 </div>
               </div>
 
-              <div className="jr-card-actions" style={{ display: "flex", gap: 8 }}>
+              <div
+                className="jr-card-actions"
+                style={{ display: "flex", gap: 8 }}
+              >
                 {/* NEW: vào editor */}
-                <button onClick={() => navigate(`/journals/${e._id}/edit`)}>Continue</button>
+                <button onClick={() => navigate(`/journals/${e._id}/edit`)}>
+                  Continue
+                </button>
                 {/* Quick edit trong modal */}
                 <button onClick={() => openModal(e)}>Edit</button>
                 <button onClick={() => handleDelete(e._id)}>Delete</button>
                 <button onClick={() => doMarkSynced(e._id)}>Mark Synced</button>
-                <button onClick={() => runAnalyze(e)}>Analyze (AI)</button>
+                <button onClick={() => viewAIHistory(e)}>
+                  View AI History
+                </button>
               </div>
             </article>
           ))}
@@ -445,13 +489,32 @@ export default function JournalEntriesPage() {
         )}
       </section>
 
-      <footer className="jr-footer">© {new Date().getFullYear()} My Journal</footer>
+      <footer className="jr-footer">
+        © {new Date().getFullYear()} My Journal
+      </footer>
 
       {/* CREATE / EDIT MODAL */}
       {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">{editing ? "Quick Edit" : "Create New Journal"}</h2>
+        <div
+          className="modal-backdrop"
+          onClick={() => {
+            setShowModal(false);
+            setEditing(null);
+            setFormTitle("");
+            setFormMood("happy");
+            setUseTemplate(false);
+            setSelectedTemplateId(null);
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="modal-title">
+              {editing ? "Quick Edit" : "Create New Journal"}
+            </h2>
 
             <form onSubmit={handleSubmit}>
               <input
@@ -515,7 +578,9 @@ export default function JournalEntriesPage() {
                           <button
                             key={tid}
                             type="button"
-                            className={`tpl-item ${isSel ? "is-active" : ""} ${disabled ? "is-disabled" : ""}`}
+                            className={`tpl-item ${isSel ? "is-active" : ""} ${
+                              disabled ? "is-disabled" : ""
+                            }`}
                             onClick={() => {
                               if (disabled) {
                                 alert("Premium only");
@@ -531,7 +596,9 @@ export default function JournalEntriesPage() {
                                 src={t.imageUrl}
                                 alt={t.name}
                                 loading="lazy"
-                                onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+                                onError={(e) =>
+                                  (e.currentTarget.style.visibility = "hidden")
+                                }
                               />
                             ) : (
                               <div
@@ -556,14 +623,631 @@ export default function JournalEntriesPage() {
               )}
 
               <div className="modal-actions">
-                <button type="button" className="modal-btn ghost" onClick={() => setShowModal(false)}>
+                <button
+                  type="button"
+                  className="modal-btn ghost"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditing(null);
+                    setFormTitle("");
+                    setFormMood("happy");
+                    setUseTemplate(false);
+                    setSelectedTemplateId(null);
+                  }}
+                >
                   Cancel
                 </button>
                 <button className="modal-btn" disabled={saving}>
-                  {editing ? (saving ? "Saving..." : "Save") : saving ? "Continuing..." : "Continue"}
+                  {editing
+                    ? saving
+                      ? "Saving..."
+                      : "Save"
+                    : saving
+                    ? "Continuing..."
+                    : "Continue"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* AI History Modal */}
+      {showAIHistory && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowAIHistory(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "800px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflow: "hidden",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                paddingBottom: "16px",
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    backgroundColor: "#8b5cf6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                  }}
+                >
+                  AI
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "24px",
+                    fontWeight: "600",
+                    color: "#1f2937",
+                  }}
+                >
+                  AI Analysis History
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowAIHistory(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  color: "#6b7280",
+                  padding: "4px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            {loadingHistory ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  color: "#6b7280",
+                }}
+              >
+                Loading analysis history...
+              </div>
+            ) : aiHistory.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  color: "#6b7280",
+                }}
+              >
+                No AI analysis history yet
+              </div>
+            ) : (
+              <div
+                style={{
+                  maxHeight: "50vh",
+                  overflowY: "auto",
+                  marginBottom: "20px",
+                }}
+              >
+                {aiHistory.map((analysis, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "12px",
+                      padding: "20px",
+                      marginBottom: "16px",
+                      backgroundColor: "#f9fafb",
+                    }}
+                  >
+                    {/* Analysis Header */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: "18px",
+                          fontWeight: "600",
+                          color: "#1f2937",
+                        }}
+                      >
+                        Analysis #{index + 1}
+                      </h3>
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>
+                        {new Date(analysis.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Primary Emotion & Sentiment Cards */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "16px",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      {/* Primary Emotion Card */}
+                      <div
+                        style={{
+                          backgroundColor: "#f3f4f6",
+                          borderRadius: "8px",
+                          padding: "16px",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#6b7280",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          Primary Emotion
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "bold",
+                            color: "#1f2937",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {analysis.results?.emotionAnalysis?.primaryEmotion ||
+                            "N/A"}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                          Score:{" "}
+                          {analysis.results?.emotionAnalysis?.emotionScore ||
+                            "N/A"}
+                          Conf:{" "}
+                          {analysis.results?.emotionAnalysis?.confidence ||
+                            "N/A"}
+                        </div>
+                      </div>
+
+                      {/* Sentiment Card */}
+                      <div
+                        style={{
+                          backgroundColor: "#fce7f3",
+                          borderRadius: "8px",
+                          padding: "16px",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#6b7280",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          Sentiment
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: "bold",
+                            color: "#1f2937",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {analysis.results?.sentimentAnalysis
+                            ?.overallSentiment || "N/A"}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                          Score:{" "}
+                          {analysis.results?.sentimentAnalysis
+                            ?.sentimentScore || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mental Health Indicators */}
+                    {analysis.results?.mentalHealthIndicators && (
+                      <div style={{ marginBottom: "16px" }}>
+                        <h4
+                          style={{
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            color: "#1f2937",
+                            margin: "0 0 12px 0",
+                          }}
+                        >
+                          Mental Health Indicators
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              backgroundColor: "#e0e7ff",
+                              color: "#3730a3",
+                              padding: "4px 12px",
+                              borderRadius: "20px",
+                              fontSize: "12px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Stress:{" "}
+                            {
+                              analysis.results.mentalHealthIndicators
+                                .stressLevel
+                            }
+                          </span>
+                          <span
+                            style={{
+                              backgroundColor: analysis.results
+                                .mentalHealthIndicators.depressionSigns
+                                ? "#fef2f2"
+                                : "#f0fdf4",
+                              color: analysis.results.mentalHealthIndicators
+                                .depressionSigns
+                                ? "#dc2626"
+                                : "#16a34a",
+                              padding: "4px 12px",
+                              borderRadius: "20px",
+                              fontSize: "12px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Depression:{" "}
+                            {analysis.results.mentalHealthIndicators
+                              .depressionSigns
+                              ? "Yes"
+                              : "No"}
+                          </span>
+                          <span
+                            style={{
+                              backgroundColor: "#e0e7ff",
+                              color: "#3730a3",
+                              padding: "4px 12px",
+                              borderRadius: "20px",
+                              fontSize: "12px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Anxiety:{" "}
+                            {
+                              analysis.results.mentalHealthIndicators
+                                .anxietyLevel
+                            }
+                          </span>
+                          <span
+                            style={{
+                              backgroundColor: "#e0e7ff",
+                              color: "#3730a3",
+                              padding: "4px 12px",
+                              borderRadius: "20px",
+                              fontSize: "12px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Risk:{" "}
+                            {analysis.results.mentalHealthIndicators.riskLevel}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Keywords */}
+                    {analysis.results?.keywords && (
+                      <div style={{ marginBottom: "16px" }}>
+                        <h4
+                          style={{
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            color: "#1f2937",
+                            margin: "0 0 12px 0",
+                          }}
+                        >
+                          Keywords
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                          }}
+                        >
+                          {analysis.results.keywords.emotional &&
+                            analysis.results.keywords.emotional.length > 0 && (
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "14px",
+                                    color: "#6b7280",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  Emotional
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "6px",
+                                    flexWrap: "wrap",
+                                  }}
+                                >
+                                  {analysis.results.keywords.emotional.map(
+                                    (keyword, i) => (
+                                      <span
+                                        key={i}
+                                        style={{
+                                          backgroundColor: "#e0e7ff",
+                                          color: "#3730a3",
+                                          padding: "4px 12px",
+                                          borderRadius: "20px",
+                                          fontSize: "12px",
+                                          fontWeight: "500",
+                                        }}
+                                      >
+                                        {keyword}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          {analysis.results.keywords.behavioral &&
+                            analysis.results.keywords.behavioral.length > 0 && (
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "14px",
+                                    color: "#6b7280",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  Behavioral
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "6px",
+                                    flexWrap: "wrap",
+                                  }}
+                                >
+                                  {analysis.results.keywords.behavioral.map(
+                                    (keyword, i) => (
+                                      <span
+                                        key={i}
+                                        style={{
+                                          backgroundColor: "#e0e7ff",
+                                          color: "#3730a3",
+                                          padding: "4px 12px",
+                                          borderRadius: "20px",
+                                          fontSize: "12px",
+                                          fontWeight: "500",
+                                        }}
+                                      >
+                                        {keyword}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Improvement Suggestions */}
+                    {analysis.results?.improvementSuggestions && (
+                      <div>
+                        <h4
+                          style={{
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            color: "#1f2937",
+                            margin: "0 0 12px 0",
+                          }}
+                        >
+                          Improvement Suggestions
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
+                        >
+                          {/* Immediate Actions */}
+                          {analysis.results.improvementSuggestions
+                            .immediateActions &&
+                            analysis.results.improvementSuggestions
+                              .immediateActions.length > 0 && (
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "14px",
+                                    fontWeight: "600",
+                                    color: "#dc2626",
+                                    marginBottom: "6px",
+                                  }}
+                                >
+                                  Immediate
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                  {analysis.results.improvementSuggestions.immediateActions.map(
+                                    (action, i) => (
+                                      <li
+                                        key={i}
+                                        style={{
+                                          fontSize: "13px",
+                                          color: "#374151",
+                                          marginBottom: "4px",
+                                          lineHeight: "1.4",
+                                        }}
+                                      >
+                                        {action}
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                          {/* Short-term Goals */}
+                          {analysis.results.improvementSuggestions
+                            .shortTermGoals &&
+                            analysis.results.improvementSuggestions
+                              .shortTermGoals.length > 0 && (
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "14px",
+                                    fontWeight: "600",
+                                    color: "#f59e0b",
+                                    marginBottom: "6px",
+                                  }}
+                                >
+                                  Short-term
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                  {analysis.results.improvementSuggestions.shortTermGoals.map(
+                                    (goal, i) => (
+                                      <li
+                                        key={i}
+                                        style={{
+                                          fontSize: "13px",
+                                          color: "#374151",
+                                          marginBottom: "4px",
+                                          lineHeight: "1.4",
+                                        }}
+                                      >
+                                        {goal}
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                          {/* Long-term Strategies */}
+                          {analysis.results.improvementSuggestions
+                            .longTermStrategies &&
+                            analysis.results.improvementSuggestions
+                              .longTermStrategies.length > 0 && (
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "14px",
+                                    fontWeight: "600",
+                                    color: "#059669",
+                                    marginBottom: "6px",
+                                  }}
+                                >
+                                  Long-term
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                  {analysis.results.improvementSuggestions.longTermStrategies.map(
+                                    (strategy, i) => (
+                                      <li
+                                        key={i}
+                                        style={{
+                                          fontSize: "13px",
+                                          color: "#374151",
+                                          marginBottom: "4px",
+                                          lineHeight: "1.4",
+                                        }}
+                                      >
+                                        {strategy}
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div
+              style={{
+                marginTop: "20px",
+                paddingTop: "16px",
+                borderTop: "1px solid #e5e7eb",
+                display: "flex",
+                justifyContent: "flex-end",
+                position: "sticky",
+                bottom: 0,
+                backgroundColor: "white",
+                zIndex: 10,
+              }}
+            >
+              <button
+                onClick={() => setShowAIHistory(false)}
+                style={{
+                  backgroundColor: "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

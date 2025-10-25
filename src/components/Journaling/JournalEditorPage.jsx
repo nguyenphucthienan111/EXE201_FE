@@ -1,5 +1,5 @@
 // src/components/Journal/JournalEditorPage.jsx
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "../style/Journal.css";
 import {
@@ -7,6 +7,7 @@ import {
   updateJournal,
   saveAnalysisHistory, // ⬅️ thêm để lưu lịch sử
 } from "../../services/journalService";
+import api from "../../services/api";
 import { getTemplates, toAbsUrl } from "../../services/templateService";
 import useJournalAI from "../../hooks/useJournalAI";
 import SaveConfirmModal from "../common/SaveConfirmModal";
@@ -39,6 +40,11 @@ export default function JournalEditorPage() {
   // analysis modal
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisCount, setAnalysisCount] = useState(0);
+
+  // confirmation modal
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   // journal state
   const [title, setTitle] = useState("");
@@ -92,6 +98,15 @@ export default function JournalEditorPage() {
         setTitle(j?.title || "");
         setContent(j?.content || j?.templateContent || "");
         setMood(j?.mood || "happy");
+
+        // Check analysis history count
+        try {
+          const { data } = await api.get(`/journals/${id}/analysis-history`);
+          setAnalysisCount(data.analyses?.length || 0);
+        } catch (e) {
+          console.warn("Failed to load analysis history:", e);
+          setAnalysisCount(0);
+        }
 
         const passedTplId = location.state?.templateId || null;
         const tplId = j?.templateId || passedTplId || null;
@@ -161,19 +176,118 @@ export default function JournalEditorPage() {
     }
   }
 
-  // ✅ Analyze (AI) – show modal component + lưu history
-  const onAnalyze = async () => {
-    if (!id) return;
+  // AI Analysis functions with useCallback
+  const runAnalysis = useCallback(async () => {
     try {
-      const res = await analyze({ content: htmlToText(content), journalId: id });
+      const res = await analyze({
+        content: htmlToText(content),
+        journalId: id,
+      });
       if (!res) return alert("No analysis result.");
 
       // Lưu lịch sử để tab History có dữ liệu
       try {
         await saveAnalysisHistory(id, res);
+        setAnalysisCount((prev) => prev + 1); // Update count
       } catch (e2) {
         // Không chặn UI nếu lưu thất bại
-        console.warn("Save history failed:", e2?.response?.data?.message || e2?.message);
+        console.warn(
+          "Save history failed:",
+          e2?.response?.data?.message || e2?.message
+        );
+      }
+
+      setAnalysisResult(res); // res: { emotionAnalysis, ... }
+      setShowAnalysis(true);
+    } catch (e) {
+      alert(e?.response?.data?.message || "Analyze failed.");
+    }
+  }, [analyze, content, id, saveAnalysisHistory]);
+
+  const runSuggest = useCallback(async () => {
+    try {
+      const res = await suggestBasic({
+        mood,
+        topic: "reflection",
+        journalId: id,
+      });
+      const tips = res?.suggestions || [];
+      if (!tips.length) return alert("No suggestions.");
+      const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
+      setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
+    } catch (e) {
+      alert(e?.response?.data?.message || "Suggest failed.");
+    }
+  }, [suggestBasic, mood, id]);
+
+  const runSuggestPlus = useCallback(async () => {
+    try {
+      const res = await suggestPlus({
+        mood,
+        topic: "reflection",
+        journalId: id,
+      });
+      const tips = res?.suggestions || [];
+      if (!tips.length) return alert("No suggestions.");
+      const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
+      setContent((prev) => (prev ? prev + "<br/>" + bullets : bullets));
+    } catch (e) {
+      alert(e?.response?.data?.message || "Suggest+ failed.");
+    }
+  }, [suggestPlus, mood, id]);
+
+  // Show confirmation modal
+  const showConfirmation = (actionType) => {
+    setConfirmAction(actionType);
+    setShowConfirmModal(true);
+  };
+
+  // Handle confirmed action
+  const handleConfirmedAction = async () => {
+    setShowConfirmModal(false);
+    if (!confirmAction) return;
+
+    try {
+      if (confirmAction === "analyze") {
+        await runAnalysis();
+      } else if (confirmAction === "suggest") {
+        await runSuggest();
+      } else if (confirmAction === "suggestPlus") {
+        await runSuggestPlus();
+      }
+    } catch (e) {
+      console.error("Action failed:", e);
+    }
+    setConfirmAction(null);
+  };
+
+  // ✅ Analyze (AI) – show modal component + lưu history
+  const onAnalyze = async () => {
+    if (!id) return;
+
+    // Check if this journal has been analyzed before
+    if (analysisCount > 0) {
+      showConfirmation("analyze");
+      return;
+    }
+
+    try {
+      const res = await analyze({
+        content: htmlToText(content),
+        journalId: id,
+      });
+      if (!res) return alert("No analysis result.");
+
+      // Lưu lịch sử để tab History có dữ liệu
+      try {
+        await saveAnalysisHistory(id, res);
+        setAnalysisCount((prev) => prev + 1); // Update count
+      } catch (e2) {
+        // Không chặn UI nếu lưu thất bại
+        console.warn(
+          "Save history failed:",
+          e2?.response?.data?.message || e2?.message
+        );
       }
 
       setAnalysisResult(res); // res: { emotionAnalysis, ... }
@@ -185,8 +299,19 @@ export default function JournalEditorPage() {
 
   const onSuggest = async () => {
     if (!id) return;
+
+    // Check if this journal has been analyzed before
+    if (analysisCount > 0) {
+      showConfirmation("suggest");
+      return;
+    }
+
     try {
-      const res = await suggestBasic({ mood, topic: "reflection", journalId: id });
+      const res = await suggestBasic({
+        mood,
+        topic: "reflection",
+        journalId: id,
+      });
       const tips = res?.suggestions || [];
       if (!tips.length) return alert("No suggestions.");
       const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
@@ -198,8 +323,19 @@ export default function JournalEditorPage() {
 
   const onSuggestPlus = async () => {
     if (!id) return;
+
+    // Check if this journal has been analyzed before
+    if (analysisCount > 0) {
+      showConfirmation("suggestPlus");
+      return;
+    }
+
     try {
-      const res = await suggestPlus({ mood, topic: "reflection", journalId: id });
+      const res = await suggestPlus({
+        mood,
+        topic: "reflection",
+        journalId: id,
+      });
       const tips = res?.suggestions || [];
       if (!tips.length) return alert("No suggestions.");
       const bullets = tips.map((t) => `<p>• ${t}</p>`).join("");
@@ -218,7 +354,10 @@ export default function JournalEditorPage() {
       const node = exportRef.current;
       if (!node) return;
 
-      const filename = `${(title || "journal").replace(/\s+/g, "-")}.pdf`.toLowerCase();
+      const filename = `${(title || "journal").replace(
+        /\s+/g,
+        "-"
+      )}.pdf`.toLowerCase();
       await html2pdf()
         .set({
           margin: [10, 10, 10, 10],
@@ -249,7 +388,11 @@ export default function JournalEditorPage() {
     <div className={`ed-wrap wide ${locked ? "is-locked" : ""}`}>
       {/* 🔒 Screen overlay khi AI chạy */}
       {locked && (
-        <div className="screen-lock" aria-busy="true" aria-label="AI is working">
+        <div
+          className="screen-lock"
+          aria-busy="true"
+          aria-label="AI is working"
+        >
           <div className="screen-lock__spinner" />
           <div className="screen-lock__text">AI is working… please wait</div>
         </div>
@@ -258,13 +401,25 @@ export default function JournalEditorPage() {
       <div className="ed-header">
         <h1>Edit Journal</h1>
         <div className="ed-actions">
-          <button className="ed-btn ghost" onClick={() => navigate("/journal")} disabled={locked || saving}>
+          <button
+            className="ed-btn ghost"
+            onClick={() => navigate("/journal")}
+            disabled={locked || saving}
+          >
             Back
           </button>
-          <button className="ed-btn ghost" onClick={handleExportPDF} disabled={locked || exporting}>
+          <button
+            className="ed-btn ghost"
+            onClick={handleExportPDF}
+            disabled={locked || exporting}
+          >
             Export PDF
           </button>
-          <button className="ed-btn" onClick={onSaveClick} disabled={locked || saving}>
+          <button
+            className="ed-btn"
+            onClick={onSaveClick}
+            disabled={locked || saving}
+          >
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -275,7 +430,9 @@ export default function JournalEditorPage() {
           <div className="ed-tpl-right">
             <div className="ed-tpl-name">{templateMeta.name}</div>
             <div className="ed-tpl-desc">{templateMeta.desc || "—"}</div>
-            <span className={`ed-tpl-tag ${templateMeta.category}`}>{templateMeta.category}</span>
+            <span className={`ed-tpl-tag ${templateMeta.category}`}>
+              {templateMeta.category}
+            </span>
           </div>
         </div>
       )}
@@ -312,7 +469,9 @@ export default function JournalEditorPage() {
 
         <div
           ref={exportRef}
-          className={`editor-container no-overlay${exporting ? " exporting" : ""}`}
+          className={`editor-container no-overlay${
+            exporting ? " exporting" : ""
+          }`}
           style={{
             backgroundImage: templateUrl ? `url(${templateUrl})` : "none",
             backgroundSize: "cover",
@@ -331,18 +490,30 @@ export default function JournalEditorPage() {
             formats={editorFormats}
             placeholder="Start journaling..."
             style={{ minHeight: 600, borderRadius: 10 }}
-            readOnly={locked}     // 🔒 khóa editor khi AI đang chạy
+            readOnly={locked} // 🔒 khóa editor khi AI đang chạy
           />
         </div>
 
         <div className="ed-footerbar">
-          <button className="ed-btn" onClick={onAnalyze} disabled={locked || aiBusy}>
+          <button
+            className="ed-btn"
+            onClick={onAnalyze}
+            disabled={locked || aiBusy}
+          >
             Analyze (AI)
           </button>
-          <button className="ed-btn ghost" onClick={onSuggest} disabled={locked || aiBusy}>
+          <button
+            className="ed-btn ghost"
+            onClick={onSuggest}
+            disabled={locked || aiBusy}
+          >
             Suggest (AI)
           </button>
-          <button className="ed-btn ghost" onClick={onSuggestPlus} disabled={locked || aiBusy}>
+          <button
+            className="ed-btn ghost"
+            onClick={onSuggestPlus}
+            disabled={locked || aiBusy}
+          >
             Suggest+ (AI)
           </button>
         </div>
@@ -363,6 +534,115 @@ export default function JournalEditorPage() {
         onClose={() => setShowAnalysis(false)}
         journalId={id}
       />
+
+      {/* AI Confirmation Modal */}
+      {showConfirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <div style={{ marginBottom: "16px" }}>
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  backgroundColor: "#fef3c7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "16px",
+                }}
+              >
+                <span style={{ fontSize: "24px" }}>⚠️</span>
+              </div>
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#1f2937",
+                  marginBottom: "8px",
+                }}
+              >
+                AI Analysis Confirmation
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "14px",
+                  color: "#6b7280",
+                  lineHeight: "1.5",
+                }}
+              >
+                This journal has been analyzed{" "}
+                <strong>{analysisCount} time(s)</strong> before. Do you want to
+                run another AI analysis?
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  backgroundColor: "#f3f4f6",
+                  color: "#374151",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmedAction}
+                style={{
+                  backgroundColor: "#8b5cf6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

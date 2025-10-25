@@ -203,14 +203,6 @@ export default function ProfilePage() {
                   <div className="stat-label">Journals</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-number">{stats.totalMoods || 0}</div>
-                  <div className="stat-label">Mood Entries</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-number">{stats.accountAge || 0}</div>
-                  <div className="stat-label">Days Active</div>
-                </div>
-                <div className="stat-card">
                   <div className="stat-number">
                     {stats?.premiumDaysLeft || 0}
                   </div>

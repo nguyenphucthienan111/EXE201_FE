@@ -100,7 +100,10 @@ export default function App() {
         <Route path="/journals/:id/edit" element={<JournalEditorPage />} />
 
         {/* 404 */}
-        <Route path="*" element={<div style={{ padding: 24 }}>Not found</div>} />
+        <Route
+          path="*"
+          element={<div style={{ padding: 24 }}>Not found</div>}
+        />
       </Routes>
 
       {!hideLayout && <Footer />}
