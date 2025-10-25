@@ -1,9 +1,9 @@
 import "../style/Contact.css";
 import { useState } from "react";
-import Modal from "./Modal";                     // đảm bảo đường dẫn đúng
-import phoneIcon from "../../assets/phone.png";
-import counselingIcon from "../../assets/counseling.png";
-import webIcon from "../../assets/web.png";
+import Modal from "./Modal";
+import phoneIcon from "/phone.png";
+import counselingIcon from "/counseling.png";
+import webIcon from "/web.png";
 
 export default function Contact() {
   // mở/đóng Modal FAQ
@@ -29,11 +29,16 @@ export default function Contact() {
       {/* HERO */}
       <section className="contact-hero">
         <h1>We are Here to Help</h1>
-        <p>Please fill out the form below, and we will get back to you as soon as possible.</p>
+        <p>
+          Please fill out the form below, and we will get back to you as soon as
+          possible.
+        </p>
 
         <div className="cta-buttons">
           {/* => mở modal thay vì scroll */}
-          <button className="btn faq-btn" onClick={() => setFaqOpen(true)}>FAQs</button>
+          <button className="btn faq-btn" onClick={() => setFaqOpen(true)}>
+            FAQs
+          </button>
           <button className="btn learn-btn">Learn More</button>
         </div>
       </section>
@@ -57,11 +62,17 @@ export default function Contact() {
 
             <div className="form-group">
               <label htmlFor="message">Message</label>
-              <input type="text" id="message" placeholder="Type your message here" />
+              <input
+                type="text"
+                id="message"
+                placeholder="Type your message here"
+              />
             </div>
           </div>
 
-          <button type="submit" className="send-btn">Send Message</button>
+          <button type="submit" className="send-btn">
+            Send Message
+          </button>
         </form>
       </section>
 
@@ -88,19 +99,25 @@ export default function Contact() {
         <h2>Resources for Support</h2>
         <div className="support-items">
           <div className="support-card">
-            <div className="icon-circle"><img src={phoneIcon} alt="Hotline" /></div>
+            <div className="icon-circle">
+              <img src={phoneIcon} alt="Hotline" />
+            </div>
             <h3>Hotline</h3>
             <p className="link">1-800-273-8255</p>
           </div>
 
           <div className="support-card">
-            <div className="icon-circle"><img src={counselingIcon} alt="Campus Counseling Center" /></div>
+            <div className="icon-circle">
+              <img src={counselingIcon} alt="Campus Counseling Center" />
+            </div>
             <h3>Campus Counseling Center</h3>
             <p>Visit our center for support</p>
           </div>
 
           <div className="support-card">
-            <div className="icon-circle"><img src={webIcon} alt="Everquill" /></div>
+            <div className="icon-circle">
+              <img src={webIcon} alt="Everquill" />
+            </div>
             <h3>Everquill</h3>
             <p className="link">everquill.com</p>
           </div>
@@ -108,12 +125,18 @@ export default function Contact() {
       </section>
 
       {/* MODAL FAQs */}
-      <Modal open={faqOpen} onClose={() => setFaqOpen(false)} title="Frequently Asked Questions">
+      <Modal
+        open={faqOpen}
+        onClose={() => setFaqOpen(false)}
+        title="Frequently Asked Questions"
+      >
         <div className="faq-list">
           {faqs.map((item, i) => (
             <details key={i} className="faq-item">
               <summary className="faq-q">{item.q}</summary>
-              <div className="faq-a"><p>{item.a}</p></div>
+              <div className="faq-a">
+                <p>{item.a}</p>
+              </div>
             </details>
           ))}
         </div>

@@ -13,13 +13,13 @@ export default function ExploreFeatures() {
 
         <div className="explore__grid">
           <div className="explore-card">
-            <img src="/src/assets/mood.png" alt="Mood Tracker" />
+            <img src="/mood.png" alt="Mood Tracker" />
             <h3 className="explore-card__title">Mood Tracker</h3>
             <p className="explore-card__desc">Track your mood effortlessly.</p>
           </div>
 
           <div className="explore-card">
-            <img src="/src/assets/reminder.png" alt="Daily Reminders" />
+            <img src="/reminder.png" alt="Daily Reminders" />
             <h3 className="explore-card__title">Daily Reminders</h3>
             <p className="explore-card__desc">Get gentle nudges to journal.</p>
           </div>

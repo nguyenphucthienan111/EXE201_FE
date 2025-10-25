@@ -26,11 +26,7 @@ export default function About() {
 
         <div className="card-container">
           <div className="card">
-            <img
-              src="src/assets/empathy.png"
-              alt="Empathy"
-              className="card-img"
-            />
+            <img src="/empathy.png" alt="Empathy" className="card-img" />
             <div className="card-content">
               <h3>Empathy</h3>
               <p>
@@ -41,11 +37,7 @@ export default function About() {
           </div>
 
           <div className="card">
-            <img
-              src="src/assets/privacy.png"
-              alt="Privacy"
-              className="card-img"
-            />
+            <img src="/privacy.png" alt="Privacy" className="card-img" />
             <div className="card-content">
               <h3>Privacy</h3>
               <p>
@@ -58,7 +50,7 @@ export default function About() {
 
           <div className="card">
             <img
-              src="src/assets/transparency.png"
+              src="/transparency.png"
               alt="Transparency"
               className="card-img"
             />

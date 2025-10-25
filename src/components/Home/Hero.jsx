@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import diaryImg from "../../assets/diary.png";
+import diaryImg from "/diary.png";
 import "../style/Hero.css";
 
 function Hero() {
