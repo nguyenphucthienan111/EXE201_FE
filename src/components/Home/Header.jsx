@@ -3,7 +3,10 @@ import "../style/Header.css";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Link as ScrollLink, scroller } from "react-scroll";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { logout as apiLogout, changePassword } from "../../services/authService";
+import {
+  logout as apiLogout,
+  changePassword,
+} from "../../services/authService";
 
 // Notifications
 import {
@@ -30,12 +33,14 @@ function ChangePasswordModal({ open, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    setErr(""); setMsg("");
+    setErr("");
+    setMsg("");
     try {
       setLoading(true);
       await changePassword({ currentPassword: cur, newPassword: nw });
       setMsg("Password changed 🎉");
-      setCur(""); setNw("");
+      setCur("");
+      setNw("");
     } catch (error) {
       const m = error?.response?.data?.message || error?.message || "Failed.";
       setErr(m);
@@ -46,7 +51,12 @@ function ChangePasswordModal({ open, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" onClick={(e)=>e.stopPropagation()}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="modal-title">Change password</h3>
         <form onSubmit={submit}>
           <input
@@ -54,7 +64,7 @@ function ChangePasswordModal({ open, onClose }) {
             type="password"
             placeholder="Current password"
             value={cur}
-            onChange={(e)=>setCur(e.target.value)}
+            onChange={(e) => setCur(e.target.value)}
             required
           />
           <input
@@ -62,17 +72,21 @@ function ChangePasswordModal({ open, onClose }) {
             type="password"
             placeholder="New password (6+)"
             value={nw}
-            onChange={(e)=>setNw(e.target.value)}
+            onChange={(e) => setNw(e.target.value)}
             minLength={6}
             required
           />
 
-          {err && <div style={{color:"#d04848", marginTop:6}}>{err}</div>}
-          {msg && <div style={{color:"#2f7a2f", marginTop:6}}>{msg}</div>}
+          {err && <div style={{ color: "#d04848", marginTop: 6 }}>{err}</div>}
+          {msg && <div style={{ color: "#2f7a2f", marginTop: 6 }}>{msg}</div>}
 
           <div className="modal-actions">
-            <button type="button" className="modal-btn ghost" onClick={onClose}>Close</button>
-            <button className="modal-btn" disabled={loading}>{loading ? "Saving..." : "Save"}</button>
+            <button type="button" className="modal-btn ghost" onClick={onClose}>
+              Close
+            </button>
+            <button className="modal-btn" disabled={loading}>
+              {loading ? "Saving..." : "Save"}
+            </button>
           </div>
         </form>
       </div>
@@ -86,7 +100,13 @@ function Header() {
   const navigate = useNavigate();
 
   // ---- auth state
-  const safeParse = (s) => { try { return JSON.parse(s); } catch { return null; } };
+  const safeParse = (s) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  };
   const readUser = () => {
     const token = localStorage.getItem("access_token");
     const userJson = localStorage.getItem("user");
@@ -101,7 +121,8 @@ function Header() {
   const refreshAuth = useCallback(() => setAuth(readUser()), []);
   useEffect(() => {
     const onStorage = (e) => {
-      if (["access_token", "user", "refresh_token"].includes(e.key)) refreshAuth();
+      if (["access_token", "user", "refresh_token"].includes(e.key))
+        refreshAuth();
     };
     const onFocus = () => refreshAuth();
     const onAuthChanged = () => refreshAuth();
@@ -140,7 +161,8 @@ function Header() {
   };
 
   // scroll helpers
-  const scrollTo = (target) => scroller.scrollTo(target, { smooth: true, duration: 600, offset: -80 });
+  const scrollTo = (target) =>
+    scroller.scrollTo(target, { smooth: true, duration: 600, offset: -80 });
   const goToAndScroll = async (target) => {
     if (location.pathname !== "/") {
       navigate("/");
@@ -155,7 +177,9 @@ function Header() {
   const loggedIn = !!token;
 
   const handleLogout = async () => {
-    try { await apiLogout(); } finally {
+    try {
+      await apiLogout();
+    } finally {
       setMenuOpen(false);
       setAuth({ token: null, user: null });
       if (user?._id || user?.id || user?.email) {
@@ -192,7 +216,9 @@ function Header() {
       const res = await getUnreadCount();
       const count = res?.data?.unreadCount ?? 0;
       setUnreadCount(count);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [loggedIn]);
 
   const fetchList = useCallback(
@@ -210,7 +236,10 @@ function Header() {
           setUnreadCount(res.data.unreadCount);
         }
       } catch (e) {
-        const m = e?.response?.data?.message || e?.message || "Failed to load notifications.";
+        const m =
+          e?.response?.data?.message ||
+          e?.message ||
+          "Failed to load notifications.";
         setNotifErr(m);
       } finally {
         setNotifLoading(false);
@@ -290,30 +319,34 @@ function Header() {
   };
 
   const loadMore = () => {
-    if (!notifLoading && hasMore) fetchList({ reset: false, nextPage: page + 1 });
+    if (!notifLoading && hasMore)
+      fetchList({ reset: false, nextPage: page + 1 });
   };
 
   // =======================
   // Rate us – chỉ 1 lần
   // =======================
   const [canRate, setCanRate] = useState(false);
-  const cacheKey = user ? `has_review_${user._id || user.id || user.email}` : null;
+  const cacheKey = user
+    ? `has_review_${user._id || user.id || user.email}`
+    : null;
 
   // Chuẩn hoá và kiểm tra chính xác “đã đánh giá chưa”
   function hasUserReviewed(res) {
     const d = res?.data ?? res;
     if (!d) return false;
 
-    if (Array.isArray(d)) return d.length > 0;                   // [review]
+    if (Array.isArray(d)) return d.length > 0; // [review]
     if (typeof d === "object") {
       if (Array.isArray(d.reviews)) return d.reviews.length > 0; // {reviews:[...]}
-      if (d.review) {                                            // {review:{...}}
+      if (d.review) {
+        // {review:{...}}
         const r = d.review;
         return !!(r?._id || r?.id || typeof r?.rating === "number");
       }
       if (d._id || d.id || typeof d.rating === "number") return true; // trả object review
-      if (typeof d.hasReviewed === "boolean") return d.hasReviewed;    // {hasReviewed:true}
-      if (typeof d.count === "number") return d.count > 0;             // {count:n}
+      if (typeof d.hasReviewed === "boolean") return d.hasReviewed; // {hasReviewed:true}
+      if (typeof d.count === "number") return d.count > 0; // {count:n}
       return false;
     }
     return false;
@@ -364,7 +397,11 @@ function Header() {
       <div className="header__container">
         {/* Logo + title */}
         <NavLink className="logo" to="/" end>
-          <img src="/src/assets/logo-feather.png" alt="Everquill logo" className="logo__img" />
+          <img
+            src="/logo-feather.png"
+            alt="Everquill logo"
+            className="logo__img"
+          />
           <span className="logo__text">{currentTitle}</span>
         </NavLink>
 
@@ -373,29 +410,77 @@ function Header() {
           <ul className="nav-links">
             <li>
               {location.pathname === "/" ? (
-                <ScrollLink to="hero" smooth duration={500} offset={-80} className="cursor-pointer">Home</ScrollLink>
+                <ScrollLink
+                  to="hero"
+                  smooth
+                  duration={500}
+                  offset={-80}
+                  className="cursor-pointer"
+                >
+                  Home
+                </ScrollLink>
               ) : (
-                <NavLink to="/" end>Home</NavLink>
+                <NavLink to="/" end>
+                  Home
+                </NavLink>
               )}
             </li>
             <li>
-              <button type="button" className="linklike" onClick={() => goToAndScroll("features")}>Features</button>
+              <button
+                type="button"
+                className="linklike"
+                onClick={() => goToAndScroll("features")}
+              >
+                Features
+              </button>
             </li>
-            <li><NavLink to="/about">About</NavLink></li>
-            <li><NavLink to="/contact">Contact</NavLink></li>
-            <li><NavLink to="/premium">Premium</NavLink></li>
-            {!loggedIn && <li><NavLink to="/login">Log in</NavLink></li>}
+            <li>
+              <NavLink to="/about">About</NavLink>
+            </li>
+            <li>
+              <NavLink to="/contact">Contact</NavLink>
+            </li>
+            <li>
+              <NavLink to="/premium">Premium</NavLink>
+            </li>
+            {!loggedIn && (
+              <li>
+                <NavLink to="/login">Log in</NavLink>
+              </li>
+            )}
           </ul>
         </nav>
 
         {/* ACTIONS */}
         <div className="actions">
           <form className="search" role="search" onSubmit={onSearch}>
-            <input name="q" type="search" placeholder="Search in site" aria-label="Search in site" />
+            <input
+              name="q"
+              type="search"
+              placeholder="Search in site"
+              aria-label="Search in site"
+            />
             <button className="search__btn" aria-label="Search">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 20l-3.2-3.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M20 20l-3.2-3.2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </form>
@@ -411,9 +496,19 @@ function Header() {
                   aria-expanded={notifOpen}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z" fill="currentColor"/>
+                    <path
+                      d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z"
+                      fill="currentColor"
+                    />
                   </svg>
-                  {unreadCount > 0 && <span className="badge" aria-label={`${unreadCount} unread`}>{unreadCount}</span>}
+                  {unreadCount > 0 && (
+                    <span
+                      className="badge"
+                      aria-label={`${unreadCount} unread`}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {notifOpen && (
@@ -421,13 +516,27 @@ function Header() {
                     <div className="notif-head">
                       <div className="notif-title-head">Notifications</div>
                       <div className="notif-actions">
-                        <button className="mini" onClick={handleMarkAllRead} disabled={!notifs.length}>Mark read</button>
-                        <button className="mini danger" onClick={handleClearAll} disabled={!notifs.length}>Clear</button>
+                        <button
+                          className="mini"
+                          onClick={handleMarkAllRead}
+                          disabled={!notifs.length}
+                        >
+                          Mark read
+                        </button>
+                        <button
+                          className="mini danger"
+                          onClick={handleClearAll}
+                          disabled={!notifs.length}
+                        >
+                          Clear
+                        </button>
                       </div>
                     </div>
 
                     <div className="notif-list">
-                      {notifErr && <div className="notif-empty error">{notifErr}</div>}
+                      {notifErr && (
+                        <div className="notif-empty error">{notifErr}</div>
+                      )}
                       {!notifErr && notifLoading && !notifs.length && (
                         <div className="notif-empty">Loading…</div>
                       )}
@@ -436,10 +545,15 @@ function Header() {
                       )}
 
                       {notifs.map((n) => (
-                        <div key={n.id} className={`notif-item ${n.read ? "read" : "unread"}`}>
+                        <div
+                          key={n.id}
+                          className={`notif-item ${n.read ? "read" : "unread"}`}
+                        >
                           <div className="notif-main">
                             <div className="notif-title">{n.title}</div>
-                            {n.body && <div className="notif-body">{n.body}</div>}
+                            {n.body && (
+                              <div className="notif-body">{n.body}</div>
+                            )}
                             {n.createdAt && (
                               <div className="notif-meta">
                                 {new Date(n.createdAt).toLocaleString()}
@@ -449,11 +563,19 @@ function Header() {
 
                           <div className="notif-ops">
                             {!n.read && (
-                              <button className="mini" onClick={() => handleItemMarkRead(n.id)} aria-label="Mark as read">
+                              <button
+                                className="mini"
+                                onClick={() => handleItemMarkRead(n.id)}
+                                aria-label="Mark as read"
+                              >
                                 ✓
                               </button>
                             )}
-                            <button className="mini danger" onClick={() => handleDeleteOne(n.id)} aria-label="Delete">
+                            <button
+                              className="mini danger"
+                              onClick={() => handleDeleteOne(n.id)}
+                              aria-label="Delete"
+                            >
                               ×
                             </button>
                           </div>
@@ -462,7 +584,11 @@ function Header() {
 
                       {hasMore && (
                         <div className="notif-foot">
-                          <button className="mini" onClick={loadMore} disabled={notifLoading}>
+                          <button
+                            className="mini"
+                            onClick={loadMore}
+                            disabled={notifLoading}
+                          >
                             {notifLoading ? "Loading…" : "Load more"}
                           </button>
                         </div>
@@ -481,16 +607,35 @@ function Header() {
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                 >
-                  <span className="avatar" aria-hidden="true">{initial}</span>
+                  <span className="avatar" aria-hidden="true">
+                    {initial}
+                  </span>
                   <span className="user-name">{displayName}</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" className={`chev ${menuOpen ? "open" : ""}`}>
-                    <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    className={`chev ${menuOpen ? "open" : ""}`}
+                  >
+                    <path
+                      d="M7 10l5 5 5-5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </button>
 
                 {menuOpen && (
                   <div className="user-menu" role="menu">
-                    <NavLink to="/profile" className="user-menu__item" onClick={() => setMenuOpen(false)}>Profile</NavLink>
+                    <NavLink
+                      to="/profile"
+                      className="user-menu__item"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Profile
+                    </NavLink>
 
                     {/* Rate us – chỉ hiện khi chưa từng đánh giá */}
                     {canRate && (
@@ -499,10 +644,21 @@ function Header() {
                       </button>
                     )}
 
-                    <button className="user-menu__item" onClick={() => { setMenuOpen(false); setShowChangePw(true); }}>
+                    <button
+                      className="user-menu__item"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setShowChangePw(true);
+                      }}
+                    >
                       Change password
                     </button>
-                    <button className="user-menu__item danger" onClick={handleLogout}>Logout</button>
+                    <button
+                      className="user-menu__item danger"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
                   </div>
                 )}
               </div>
@@ -512,7 +668,10 @@ function Header() {
       </div>
 
       {/* Modal Change Password */}
-      <ChangePasswordModal open={showChangePw} onClose={() => setShowChangePw(false)} />
+      <ChangePasswordModal
+        open={showChangePw}
+        onClose={() => setShowChangePw(false)}
+      />
     </header>
   );
 }

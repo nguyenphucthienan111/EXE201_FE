@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="ft-top">
         {/* Left: big brand */}
         <div className="ft-brand">
-          <img src="/src/assets/logo-feather.png" alt="" className="ft-logo" />
+          <img src="/logo-feather.png" alt="" className="ft-logo" />
           <span className="ft-name">Everquill</span>
         </div>
 
