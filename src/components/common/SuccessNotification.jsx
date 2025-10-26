@@ -49,3 +49,4 @@ const SuccessNotification = ({ isVisible, message, onClose }) => {
 };
 
 export default SuccessNotification;
+
