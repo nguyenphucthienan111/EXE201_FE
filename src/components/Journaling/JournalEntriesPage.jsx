@@ -277,13 +277,25 @@ export default function JournalEntriesPage() {
 
   // delete entry
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this journal?")) return;
+    setDeleteEntryId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteEntryId) return;
     try {
-      await deleteJournal(id);
-      setEntries((prev) => prev.filter((x) => x._id !== id));
+      await deleteJournal(deleteEntryId);
+      setEntries((prev) => prev.filter((x) => x._id !== deleteEntryId));
+      setShowDeleteModal(false);
+      setDeleteEntryId(null);
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete entry.");
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteEntryId(null);
   };
 
   // View AI analysis history
@@ -291,6 +303,10 @@ export default function JournalEntriesPage() {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [aiHistory, setAiHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState(null);
 
   async function viewAIHistory(entry) {
     setSelectedEntry(entry);
@@ -1246,6 +1262,116 @@ export default function JournalEntriesPage() {
                 }}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={cancelDelete}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              padding: "32px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                fontSize: "24px",
+                marginBottom: "16px",
+                color: "#dc2626",
+              }}
+            >
+              ⚠️
+            </div>
+            <h3
+              style={{
+                margin: "0 0 16px 0",
+                fontSize: "20px",
+                fontWeight: "600",
+                color: "#1f2937",
+              }}
+            >
+              Delete Journal Entry
+            </h3>
+            <p
+              style={{
+                margin: "0 0 24px 0",
+                color: "#6b7280",
+                lineHeight: "1.5",
+              }}
+            >
+              Are you sure you want to delete this journal entry? This action
+              cannot be undone.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+              }}
+            >
+              <button
+                onClick={cancelDelete}
+                style={{
+                  backgroundColor: "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "12px 24px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) =>
+                  (e.target.style.backgroundColor = "#4b5563")
+                }
+                onMouseOut={(e) => (e.target.style.backgroundColor = "#6b7280")}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  backgroundColor: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "12px 24px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) =>
+                  (e.target.style.backgroundColor = "#b91c1c")
+                }
+                onMouseOut={(e) => (e.target.style.backgroundColor = "#dc2626")}
+              >
+                Delete
               </button>
             </div>
           </div>
