@@ -175,6 +175,7 @@ function Header() {
   const displayName = user?.name || user?.email || "Me";
   const initial = (displayName?.[0] || "U").toUpperCase();
   const loggedIn = !!token;
+  const userAvatar = user?.avatar;
 
   const handleLogout = async () => {
     try {
@@ -608,7 +609,20 @@ function Header() {
                   aria-expanded={menuOpen}
                 >
                   <span className="avatar" aria-hidden="true">
-                    {initial}
+                    {userAvatar && userAvatar.trim() !== "" ? (
+                      <img
+                        src={userAvatar}
+                        alt="Profile"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      initial
+                    )}
                   </span>
                   <span className="user-name">{displayName}</span>
                   <svg

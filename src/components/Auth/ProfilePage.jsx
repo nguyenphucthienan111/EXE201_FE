@@ -94,7 +94,7 @@ export default function ProfilePage() {
               {profile?.avatar && profile.avatar.trim() !== "" ? (
                 <div style={{ position: "relative", zIndex: 10 }}>
                   <img
-                    key={profile.avatar} // Force re-render when avatar changes
+                    key={profile.avatar}
                     src={profile.avatar}
                     alt="Profile"
                     className="avatar-image"
@@ -249,6 +249,16 @@ export default function ProfilePage() {
             try {
               const me = await getMyProfile();
               setProfile(me);
+
+              // Update user data in localStorage for header
+              const currentUser = JSON.parse(
+                localStorage.getItem("user") || "{}"
+              );
+              const updatedUser = { ...currentUser, avatar: me.avatar };
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+
+              // Dispatch event to refresh header
+              window.dispatchEvent(new CustomEvent("auth:changed"));
             } catch (err) {
               console.error("Error refreshing profile:", err);
             }

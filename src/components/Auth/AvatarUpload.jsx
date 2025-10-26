@@ -95,6 +95,20 @@ const AvatarUpload = ({ currentAvatar, onClose, onAvatarUpdated }) => {
     fileInputRef.current?.click();
   };
 
+  // Function to truncate filename
+  const truncateFilename = (filename, maxLength = 30) => {
+    if (filename.length <= maxLength) return filename;
+
+    const extension = filename.split(".").pop();
+    const nameWithoutExt = filename.substring(0, filename.lastIndexOf("."));
+    const truncatedName = nameWithoutExt.substring(
+      0,
+      maxLength - extension.length - 4
+    );
+
+    return `${truncatedName}...${extension}`;
+  };
+
   return (
     <div className="avatar-upload-modal">
       <div className="avatar-upload-content">
@@ -149,7 +163,9 @@ const AvatarUpload = ({ currentAvatar, onClose, onAvatarUpdated }) => {
 
             {selectedFile && (
               <div className="selected-file-info">
-                <span>Selected: {selectedFile.name}</span>
+                <span title={selectedFile.name}>
+                  Selected: {truncateFilename(selectedFile.name)}
+                </span>
                 <span className="file-size">
                   ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
