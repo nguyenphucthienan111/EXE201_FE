@@ -265,6 +265,22 @@ form {
 .login-form-box {
   z-index: 3; /* tăng lên cao hơn overlay/panel */
 }
+.login-toast { animation: login-toast-in 200ms ease-out; }
+@keyframes login-toast-in {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+input::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+/* Ẩn trong Edge, Firefox */
+input::-ms-clear,
+input::-ms-reveal {
+  display: none !important;
+}
+
 
 /* Responsive */
 @media (max-width: 650px) {

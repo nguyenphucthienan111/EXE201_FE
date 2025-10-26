@@ -7,6 +7,7 @@ import {
   createJournal,
   updateJournal,
   deleteJournal,
+  // eslint-disable-next-line no-unused-vars
   analyze,
   markSynced,
 } from "../../services/journalService";
@@ -46,15 +47,21 @@ export default function JournalEntriesPage() {
   const [formMood, setFormMood] = useState("happy");
   const [saving, setSaving] = useState(false);
 
-  // template picking (chỉ dùng cho CREATE)
+  // confirm save khi Edit
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+  // template picking (CREATE + EDIT)
   const [useTemplate, setUseTemplate] = useState(false);
   const [templates, setTemplates] = useState([]); // [{id, name, imageUrl, isPremium?, ...}]
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [templatesError, setTemplatesError] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
+  // NEW: template đang áp dụng cho journal (khi Edit)
+  const [currentTemplateId, setCurrentTemplateId] = useState(null);
+
   // premium status (suy từ getTemplates -> userPlan nếu BE có trả)
-  const [isPremiumActive, setIsPremiumActive] = useState(null); // null = chưa biết, true/false = xác định
+  const [isPremiumActive, setIsPremiumActive] = useState(null);
 
   // Load list từ server
   useEffect(() => {
@@ -122,37 +129,11 @@ export default function JournalEntriesPage() {
     return { pageItems: filtered.slice(start, end), totalPages };
   }, [filtered, page, limit]);
 
-  // mở modal
-  const openModal = (entry = null) => {
-    if (entry) {
-      // Quick edit
-      setEditing(entry);
-      setFormTitle(entry.title);
-      setFormMood(entry.mood);
-      setUseTemplate(false);
-      setSelectedTemplateId(null);
-      setIsPremiumActive(null);
-      setTemplates([]);
-      setTemplatesError("");
-    } else {
-      // Create
-      setEditing(null);
-      setFormTitle("");
-      setFormMood("happy");
-      setUseTemplate(false);
-      setSelectedTemplateId(null);
-      setIsPremiumActive(null);
-      setTemplates([]);
-      setTemplatesError("");
-    }
-    setShowModal(true);
-  };
-
-  // helper: xác định premium flag từ template (khi BE có trả)
+  // helper: xác định premium flag từ template
   const isTplPremium = (t) =>
     t?.isPremium === true || t?.tier === "premium" || t?.plan === "premium";
 
-  // helper: suy ra trạng thái premium từ userPlan (chuỗi | boolean | object)
+  // helper: suy ra trạng thái premium từ userPlan
   const inferPremiumFromUserPlan = (userPlan) => {
     if (typeof userPlan === "string") return /premium/i.test(userPlan);
     if (typeof userPlan === "boolean") return userPlan;
@@ -166,13 +147,51 @@ export default function JournalEntriesPage() {
     return null;
   };
 
-  // Hàm load templates (gom lại để dùng cả khi click Reload)
+  // mở modal
+  const openModal = (entry = null) => {
+    if (entry) {
+      // Quick edit
+      setEditing(entry);
+      setFormTitle(entry.title);
+      setFormMood(entry.mood);
+
+      // Suy ra template đang dùng từ entry (nếu BE có trả)
+      const curTpl =
+        entry.templateId ||
+        entry.appliedTemplateId ||
+        entry.template?.id ||
+        entry.template?._id ||
+        entry.meta?.templateId ||
+        null;
+
+      setCurrentTemplateId(curTpl);
+      setUseTemplate(!!curTpl);          // nếu có template thì bật sẵn
+      setSelectedTemplateId(curTpl);     // preselect trong gallery
+
+      setIsPremiumActive(null);
+      setTemplates([]);
+      setTemplatesError("");
+    } else {
+      // Create
+      setEditing(null);
+      setFormTitle("");
+      setFormMood("happy");
+      setUseTemplate(false);
+      setSelectedTemplateId(null);
+      setCurrentTemplateId(null);
+      setIsPremiumActive(null);
+      setTemplates([]);
+      setTemplatesError("");
+    }
+    setShowModal(true);
+  };
+
+  // Hàm load templates
   const loadTemplates = useCallback(async () => {
     setTemplatesLoading(true);
     setTemplatesError("");
     try {
       const res = await getTemplates();
-      // res: { list, userPlan } theo service mới
       const list = Array.isArray(res?.list) ? res.list : [];
       setTemplates(list);
       setIsPremiumActive(inferPremiumFromUserPlan(res?.userPlan));
@@ -196,74 +215,117 @@ export default function JournalEntriesPage() {
 
   // Tải templates khi bật "Use template"
   useEffect(() => {
-    if (!showModal || !useTemplate || editing) return;
+    if (!showModal || !useTemplate) return;
     loadTemplates();
-  }, [showModal, useTemplate, editing, loadTemplates]);
+  }, [showModal, useTemplate, loadTemplates]);
 
-  // submit create/update (CREATE → APPLY TEMPLATE)
+  // CREATE flow (tạo mới → apply template nếu có → navigate editor)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (editing) {
+      setShowSaveConfirm(true);
+      return;
+    }
+
     setSaving(true);
     try {
-      if (editing) {
-        const updated = await updateJournal(editing._id, {
-          title: formTitle,
-          mood: formMood,
-        });
-        setEntries((prev) =>
-          prev.map((x) => (x._id === editing._id ? updated : x))
-        );
-        setShowModal(false);
-      } else {
-        if (useTemplate && !selectedTemplateId) {
-          alert("Please select a template or uncheck 'Use a template'.");
-          setSaving(false);
-          return;
-        }
-
-        // 1) Tạo journal KHÔNG gửi templateId (để tách bước apply)
-        const created = await createJournal({
-          title: formTitle,
-          mood: formMood,
-        });
-        const newId =
-          created?._id ||
-          created?.id ||
-          created?.data?._id ||
-          created?.data?.id ||
-          created?.journal?._id ||
-          created?.data?.journal?._id ||
-          created?.journalId ||
-          created?.data?.journalId;
-
-        if (!newId) {
-          console.error("Unexpected createJournal response:", created);
-          alert("Create journal failed: missing id from server.");
-          setSaving(false);
-          return;
-        }
-
-        // 2) Nếu dùng template thì APPLY; 403 => chưa có quyền (không phải Premium)
-        if (useTemplate && selectedTemplateId) {
-          try {
-            await applyTemplate(selectedTemplateId, newId);
-          } catch (err) {
-            const s = err?.response?.status;
-            const m = err?.response?.data?.message || "Apply template failed.";
-            if (s === 403) {
-              alert(m || "Premium access required.");
-            } else if (s === 404) {
-              alert("Template or Journal not found.");
-            } else {
-              alert(m);
-            }
-            // vẫn cho vào editor; chỉ là template chưa apply
-          }
-        }
-
-        setShowModal(false);
-        navigate(`/journals/${newId}/edit`);
+      if (useTemplate && !selectedTemplateId) {
+        alert("Please select a template or uncheck 'Use a template'.");
+        setSaving(false);
+        return;
       }
+
+      const created = await createJournal({
+        title: formTitle,
+        mood: formMood,
+      });
+      const newId =
+        created?._id ||
+        created?.id ||
+        created?.data?._id ||
+        created?.data?.id ||
+        created?.journal?._id ||
+        created?.data?.journal?._id ||
+        created?.journalId ||
+        created?.data?.journalId;
+
+      if (!newId) {
+        console.error("Unexpected createJournal response:", created);
+        alert("Create journal failed: missing id from server.");
+        setSaving(false);
+        return;
+      }
+
+      if (useTemplate && selectedTemplateId) {
+        try {
+          await applyTemplate(selectedTemplateId, newId);
+        } catch (err) {
+          const s = err?.response?.status;
+          const m = err?.response?.data?.message || "Apply template failed.";
+          if (s === 403) alert(m || "Premium access required.");
+          else if (s === 404) alert("Template or Journal not found.");
+          else alert(m);
+          // vẫn cho vào editor
+        }
+      }
+
+      setShowModal(false);
+      navigate(`/journals/${newId}/edit`);
+    } catch (err) {
+      const s = err?.response?.status;
+      const m =
+        err?.response?.data?.message || err?.message || "Failed to save.";
+      if (s === 403) alert(m || "Free plan daily limit reached.");
+      else alert(m);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // SAVE khi Quick Edit (đã xác nhận)
+  const handleQuickEditSave = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      // 1) cập nhật title/mood
+      const updated = await updateJournal(editing._id, {
+        title: formTitle,
+        mood: formMood,
+      });
+      setEntries((prev) =>
+        prev.map((x) => (x._id === editing._id ? updated : x))
+      );
+
+      // 2) nếu chọn template khác template hiện tại thì apply
+      if (useTemplate && selectedTemplateId && selectedTemplateId !== currentTemplateId) {
+        try {
+          await applyTemplate(selectedTemplateId, editing._id);
+
+          // cập nhật local state & list để phản ánh template mới
+          setCurrentTemplateId(selectedTemplateId);
+          setEntries((prev) =>
+            prev.map((x) =>
+              x._id === editing._id
+                ? {
+                    ...x,
+                    templateId: selectedTemplateId,
+                    appliedTemplateId: selectedTemplateId,
+                  }
+                : x
+            )
+          );
+        } catch (err) {
+          const s = err?.response?.status;
+          const m = err?.response?.data?.message || "Apply template failed.";
+          if (s === 403) alert(m || "Premium access required.");
+          else if (s === 404) alert("Template or Journal not found.");
+          else alert(m);
+        }
+      }
+
+      setShowSaveConfirm(false);
+      setShowModal(false);
+      setEditing(null);
     } catch (err) {
       const s = err?.response?.status;
       const m =
@@ -300,6 +362,7 @@ export default function JournalEntriesPage() {
 
   // View AI analysis history
   const [showAIHistory, setShowAIHistory] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [aiHistory, setAiHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -314,7 +377,6 @@ export default function JournalEntriesPage() {
     setLoadingHistory(true);
 
     try {
-      // Use journalService to get AI analysis history
       const { data } = await api.get(`/journals/${entry._id}/analysis-history`);
       setAiHistory(data.analyses || []);
     } catch (e) {
@@ -325,7 +387,7 @@ export default function JournalEntriesPage() {
     }
   }
 
-  // Mark synced - đánh dấu journal đã được đồng bộ với thiết bị khác
+  // Mark synced
   async function doMarkSynced(id) {
     try {
       await markSynced(id);
@@ -456,11 +518,9 @@ export default function JournalEntriesPage() {
                 className="jr-card-actions"
                 style={{ display: "flex", gap: 8 }}
               >
-                {/* NEW: vào editor */}
                 <button onClick={() => navigate(`/journals/${e._id}/edit`)}>
                   Continue
                 </button>
-                {/* Quick edit trong modal */}
                 <button onClick={() => openModal(e)}>Edit</button>
                 <button onClick={() => handleDelete(e._id)}>Delete</button>
                 <button onClick={() => doMarkSynced(e._id)}>Mark Synced</button>
@@ -513,6 +573,7 @@ export default function JournalEntriesPage() {
       {showModal && (
         <div
           className="modal-backdrop"
+          style={{ zIndex: 1000 }}
           onClick={() => {
             setShowModal(false);
             setEditing(null);
@@ -520,6 +581,7 @@ export default function JournalEntriesPage() {
             setFormMood("happy");
             setUseTemplate(false);
             setSelectedTemplateId(null);
+            setCurrentTemplateId(null);
           }}
         >
           <div
@@ -527,12 +589,25 @@ export default function JournalEntriesPage() {
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              pointerEvents: showSaveConfirm ? "none" : "auto",
+            }}
           >
             <h2 className="modal-title">
               {editing ? "Quick Edit" : "Create New Journal"}
             </h2>
 
-            <form onSubmit={handleSubmit}>
+            {/* onSubmit: nếu editing -> hỏi confirm; nếu create -> submit */}
+            <form
+              onSubmit={(e) => {
+                if (editing) {
+                  e.preventDefault();
+                  setShowSaveConfirm(true);
+                } else {
+                  handleSubmit(e);
+                }
+              }}
+            >
               <input
                 className="modal-input"
                 value={formTitle}
@@ -553,20 +628,22 @@ export default function JournalEntriesPage() {
                 ))}
               </select>
 
-              {/* Toggle chọn template (chỉ khi CREATE) */}
-              {!editing && (
-                <label className="modal-check">
-                  <input
-                    type="checkbox"
-                    checked={useTemplate}
-                    onChange={(e) => setUseTemplate(e.target.checked)}
-                  />
-                  <span style={{ marginLeft: 8 }}>Use a template</span>
-                </label>
-              )}
+              {/* Toggle chọn template (EDIT + CREATE) */}
+              <label className="modal-check">
+                <input
+                  type="checkbox"
+                  checked={useTemplate}
+                  onChange={(e) => setUseTemplate(e.target.checked)}
+                />
+                <span style={{ marginLeft: 8 }}>
+                  {editing
+                    ? "Apply a template to this journal"
+                    : "Use a template"}
+                </span>
+              </label>
 
               {/* Gallery template */}
-              {!editing && useTemplate && (
+              {useTemplate && (
                 <div className="tpl-wrap">
                   {templatesLoading ? (
                     <div>Loading templates…</div>
@@ -583,57 +660,108 @@ export default function JournalEntriesPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="tpl-grid">
-                      {templates.map((t) => {
-                        const tid = t.id ?? t._id ?? t.templateId; // robust
-                        const isSel = selectedTemplateId === tid;
-                        const premium = isTplPremium(t);
-                        const disabled = premium && isPremiumActive === false; // nếu user không premium thì disable
+                    <>
+                      {editing && (
+                        <div
+                          style={{
+                            margin: "6px 0 10px",
+                            fontSize: 13,
+                            color: "#6b7280",
+                          }}
+                        >
+                          Current template:&nbsp;
+                          <strong>
+                            {(() => {
+                              const cur = templates.find(
+                                (x) =>
+                                  (x.id ?? x._id ?? x.templateId) ===
+                                  currentTemplateId
+                              );
+                              return cur?.name
+                                ? cur.name
+                                : currentTemplateId
+                                ? "(Unknown)"
+                                : "None";
+                            })()}
+                          </strong>
+                        </div>
+                      )}
 
-                        return (
-                          <button
-                            key={tid}
-                            type="button"
-                            className={`tpl-item ${isSel ? "is-active" : ""} ${
-                              disabled ? "is-disabled" : ""
-                            }`}
-                            onClick={() => {
-                              if (disabled) {
-                                alert("Premium only");
-                                return;
-                              }
-                              setSelectedTemplateId(tid);
-                            }}
-                            title={premium ? `${t.name} (Premium)` : t.name}
-                            aria-disabled={disabled}
-                          >
-                            {t.imageUrl ? (
-                              <img
-                                src={t.imageUrl}
-                                alt={t.name}
-                                loading="lazy"
-                                onError={(e) =>
-                                  (e.currentTarget.style.visibility = "hidden")
+                      <div className="tpl-grid">
+                        {templates.map((t) => {
+                          const tid = t.id ?? t._id ?? t.templateId;
+                          const isSel = selectedTemplateId === tid;
+                          const isCurrent =
+                            currentTemplateId &&
+                            String(currentTemplateId) === String(tid);
+                          const premium = isTplPremium(t);
+                          const disabled =
+                            premium && isPremiumActive === false;
+
+                          return (
+                            <button
+                              key={tid}
+                              type="button"
+                              className={`tpl-item ${isSel ? "is-active" : ""} ${
+                                disabled ? "is-disabled" : ""
+                              }`}
+                              onClick={() => {
+                                if (disabled) {
+                                  alert("Premium only");
+                                  return;
                                 }
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: 110,
-                                  borderRadius: 10,
-                                  background: "#f3f4f6",
-                                  border: "1px solid #e5e7eb",
-                                }}
-                              />
-                            )}
-                            <span className="tpl-name">
-                              {t.name || "Untitled"} {premium ? "★" : ""}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                                setSelectedTemplateId(tid);
+                              }}
+                              title={premium ? `${t.name} (Premium)` : t.name}
+                              aria-disabled={disabled}
+                              style={{ position: "relative" }}
+                            >
+                              {isCurrent && (
+                                <span
+                                  style={{
+                                    position: "absolute",
+                                    top: 8,
+                                    left: 8,
+                                    fontSize: 11,
+                                    padding: "3px 8px",
+                                    borderRadius: 12,
+                                    background: "#e0f2fe",
+                                    color: "#0369a1",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Currently applied
+                                </span>
+                              )}
+
+                              {t.imageUrl ? (
+                                <img
+                                  src={t.imageUrl}
+                                  alt={t.name}
+                                  loading="lazy"
+                                  onError={(e) =>
+                                    (e.currentTarget.style.visibility = "hidden")
+                                  }
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: 110,
+                                    borderRadius: 10,
+                                    background: "#f3f4f6",
+                                    border: "1px solid #e5e7eb",
+                                  }}
+                                />
+                              )}
+                              <span className="tpl-name">
+                                {t.name || "Untitled"} {premium ? "★" : ""}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -649,21 +777,94 @@ export default function JournalEntriesPage() {
                     setFormMood("happy");
                     setUseTemplate(false);
                     setSelectedTemplateId(null);
+                    setCurrentTemplateId(null);
                   }}
                 >
                   Cancel
                 </button>
-                <button className="modal-btn" disabled={saving}>
-                  {editing
-                    ? saving
-                      ? "Saving..."
-                      : "Save"
-                    : saving
-                    ? "Continuing..."
-                    : "Continue"}
-                </button>
+
+                {/* nếu Edit -> nút Save mở confirm; nếu Create -> submit */}
+                {editing ? (
+                  <button
+                    type="button"
+                    className="modal-btn"
+                    disabled={saving}
+                    onClick={() => setShowSaveConfirm(true)}
+                  >
+                    {saving ? "Saving..." : "Save"}
+                  </button>
+                ) : (
+                  <button className="modal-btn" disabled={saving}>
+                    {saving ? "Continuing..." : "Continue"}
+                  </button>
+                )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Save Confirmation Modal (Edit) */}
+      {showSaveConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setShowSaveConfirm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              padding: "28px",
+              maxWidth: "420px",
+              width: "90%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 24, marginBottom: 12 }}>💾</div>
+            <h3 style={{ margin: "0 0 8px 0" }}>Save changes?</h3>
+            <p style={{ margin: "0 0 20px 0", color: "#6b7280" }}>
+              Bạn có chắc muốn lưu thay đổi cho journal này không?
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button
+                onClick={() => setShowSaveConfirm(false)}
+                style={{
+                  backgroundColor: "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 18px",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleQuickEditSave}
+                style={{
+                  backgroundColor: "#2563eb",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 18px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Yes, Save
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -863,6 +1064,7 @@ export default function JournalEntriesPage() {
                           Score:{" "}
                           {analysis.results?.emotionAnalysis?.emotionScore ||
                             "N/A"}
+                          {" · "}
                           Conf:{" "}
                           {analysis.results?.emotionAnalysis?.confidence ||
                             "N/A"}
@@ -900,8 +1102,8 @@ export default function JournalEntriesPage() {
                         </div>
                         <div style={{ fontSize: "12px", color: "#6b7280" }}>
                           Score:{" "}
-                          {analysis.results?.sentimentAnalysis
-                            ?.sentimentScore || "N/A"}
+                          {analysis.results?.sentimentAnalysis?.sentimentScore ||
+                            "N/A"}
                         </div>
                       </div>
                     </div>
