@@ -70,8 +70,13 @@ api.interceptors.response.use(
 
     // 2) Chỉ xử lý refresh cho các request bảo vệ
     if (status === 401 && !originalRequest._retry) {
-      // When backend refresh token lives in HttpOnly cookie we still attempt
-      // a refresh even though there's nothing in localStorage to check.
+      const hasRefresh = !!localStorage.getItem("refresh_token");
+      if (!hasRefresh) {
+        // Không có refresh token: không redirect ở đây, để UI tự xử lý
+        localStorage.removeItem("access_token");
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // Xếp hàng đợi khi đang refresh
         return new Promise((resolve, reject) => {
@@ -106,6 +111,7 @@ api.interceptors.response.use(
         // Refresh thất bại: dọn token và chỉ điều hướng nếu không ở /login
         processQueue(err, null);
         localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");
 
         if (window.location.pathname !== "/login") {
