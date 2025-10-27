@@ -13,13 +13,15 @@ export async function verifyEmail({ email, code }) {
 }
 
 // Đăng nhập
-export async function login({ email, password }) {
-  const { data } = await api.post("/auth/login", { email, password });
+export async function login({ email, password, rememberMe = false }) {
+  const { data } = await api.post("/auth/login", {
+    email,
+    password,
+    rememberMe,
+  });
   // chuẩn hoá lưu trữ
   const access = data?.accessToken || data?.token;
-  const refresh = data?.refreshToken; // nếu backend trả về
   if (access) localStorage.setItem("access_token", access);
-  if (refresh) localStorage.setItem("refresh_token", refresh);
   if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
   return data;
 }
@@ -56,15 +58,13 @@ export async function logout() {
     await api.post("/auth/logout");
   } finally {
     localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("role");
   }
 }
 // Refresh token
 export async function refreshToken() {
-  const refresh = localStorage.getItem("refresh_token");
-  if (!refresh) throw new Error("No refresh token");
-  const { data } = await api.post("/auth/refresh", { refreshToken: refresh });
+  const { data } = await api.post("/auth/refresh");
   if (data?.accessToken) {
     localStorage.setItem("access_token", data.accessToken);
   }

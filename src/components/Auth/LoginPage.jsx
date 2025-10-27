@@ -60,7 +60,9 @@ const LoginPage = () => {
     try {
       const raw = localStorage.getItem("recent_emails");
       if (raw) setRecentEmails(JSON.parse(raw));
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   }, []);
 
   const saveRecentEmail = (email) => {
@@ -70,12 +72,15 @@ const LoginPage = () => {
       const next = [email, ...arr.filter((e) => e !== email)].slice(0, 5);
       localStorage.setItem("recent_emails", JSON.stringify(next));
       setRecentEmails(next);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   };
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   // eslint-disable-next-line no-unused-vars
   const [loginError, setLoginError] = useState("");
   // eslint-disable-next-line no-unused-vars
@@ -138,7 +143,10 @@ const LoginPage = () => {
         data?.message ||
         "Registration successful! Please check your email (including spam folder) for the verification code.";
       setRegisterSuccess(msg);
-      showToast("Registration successful. Please verify your email.", "success");
+      showToast(
+        "Registration successful. Please verify your email.",
+        "success"
+      );
 
       localStorage.setItem("pending_verify_email", regEmail);
       setRegisteredEmail(regEmail);
@@ -167,7 +175,7 @@ const LoginPage = () => {
 
   // --- LOGIN ---
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();                 // CHẶN SUBMIT NGAY
+    e.preventDefault(); // CHẶN SUBMIT NGAY
     setLoginError("");
     setLoginSuccess("");
 
@@ -175,7 +183,7 @@ const LoginPage = () => {
       const msg = "Please enter both email and password.";
       setLoginError(msg);
       showToast(msg, "error");
-      setLoginPassword("");             // chỉ xoá password
+      setLoginPassword("");
       passwordInputRef.current?.focus();
       return;
     }
@@ -184,7 +192,11 @@ const LoginPage = () => {
 
     try {
       setLoginLoading(true);
-      const data = await login({ email: loginEmail, password: loginPassword });
+      const data = await login({
+        email: loginEmail,
+        password: loginPassword,
+        rememberMe,
+      });
 
       // Chuẩn hoá response
       const token =
@@ -192,7 +204,6 @@ const LoginPage = () => {
         data?.accessToken ||
         data?.data?.token ||
         data?.data?.accessToken;
-      const refresh = data?.refreshToken || data?.data?.refreshToken;
       const userObj = data?.user || data?.data?.user || {};
 
       // Role
@@ -201,7 +212,9 @@ const LoginPage = () => {
       else if (data?.role) role = String(data.role).toLowerCase();
       else if (data?.data?.role) role = String(data.data.role).toLowerCase();
       else if (Array.isArray(userObj?.roles)) {
-        role = userObj.roles.map((r) => String(r).toLowerCase()).includes("admin")
+        role = userObj.roles
+          .map((r) => String(r).toLowerCase())
+          .includes("admin")
           ? "admin"
           : "user";
       } else if (userObj?.isAdmin) role = "admin";
@@ -214,7 +227,6 @@ const LoginPage = () => {
         localStorage.setItem("token", token);
         localStorage.setItem("access_token", token);
       }
-      if (refresh) localStorage.setItem("refresh_token", refresh);
       localStorage.setItem("role", role);
       if (Object.keys(userObj).length > 0) {
         localStorage.setItem("user", JSON.stringify(userObj));
@@ -238,7 +250,8 @@ const LoginPage = () => {
         err?.message ||
         "Login failed.";
       const status = err?.response?.status;
-      if (status === 400 || status === 401) msg = "Incorrect email or password.";
+      if (status === 400 || status === 401)
+        msg = "Incorrect email or password.";
 
       setLoginError(msg);
       setLoginEmail((prev) => (prev ? prev : latestEmailRef.current));
@@ -297,7 +310,11 @@ const LoginPage = () => {
         </div>
       )}
 
-      <button className="login-back-home-btn" onClick={handleBackHome} type="button">
+      <button
+        className="login-back-home-btn"
+        onClick={handleBackHome}
+        type="button"
+      >
         ← Back to Home
       </button>
 
@@ -356,11 +373,19 @@ const LoginPage = () => {
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 8,
-                marginBottom: 8,
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 12,
               }}
             >
+              {/* <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Remember me</span>
+              </label> */}
               <div className="login-forgot-link">
                 <a href="/forgot-password">Forgot password?</a>
               </div>
@@ -441,7 +466,11 @@ const LoginPage = () => {
                 {showPasswords.confirm ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
-            <button type="submit" className="login-btn" disabled={registerLoading}>
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={registerLoading}
+            >
               {registerLoading ? "Registering..." : "Register"}
             </button>
           </form>
@@ -463,7 +492,11 @@ const LoginPage = () => {
           <div className="login-toggle-panel login-toggle-right">
             <h1>Welcome Back!</h1>
             <p>Already have an account?</p>
-            <button className="login-btn" type="button" onClick={handleLoginClick}>
+            <button
+              className="login-btn"
+              type="button"
+              onClick={handleLoginClick}
+            >
               Login
             </button>
           </div>

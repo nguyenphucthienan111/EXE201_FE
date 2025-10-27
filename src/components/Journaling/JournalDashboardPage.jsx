@@ -1,10 +1,22 @@
 // src/components/Journaling/JournalDashboardPage.jsx
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboard, improvementPlan, getJournals } from "../../services/journalService";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, BarChart, Bar,
+  getDashboard,
+  improvementPlan,
+  getJournals,
+} from "../../services/journalService";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts";
 import "../style/Journal.css";
 
@@ -37,7 +49,9 @@ export default function JournalDashboardPage() {
       if (e?.response?.status === 401) {
         navigate("/login");
       } else {
-        setErrorMsg(e?.response?.data?.message || e?.message || "Failed to load dashboard");
+        setErrorMsg(
+          e?.response?.data?.message || e?.message || "Failed to load dashboard"
+        );
       }
     } finally {
       setLoading(false);
@@ -64,8 +78,12 @@ export default function JournalDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { loadDashboard(); }, [loadDashboard]);
-  useEffect(() => { loadRecent(); }, [loadRecent]);
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+  useEffect(() => {
+    loadRecent();
+  }, [loadRecent]);
 
   async function loadPlan() {
     setErrorMsg("");
@@ -73,7 +91,9 @@ export default function JournalDashboardPage() {
       const res = await improvementPlan({ focusAreas, duration });
       setPlan(res?.data || res || null);
     } catch (e) {
-      setErrorMsg(e?.response?.data?.message || e?.message || "Failed to load plan");
+      setErrorMsg(
+        e?.response?.data?.message || e?.message || "Failed to load plan"
+      );
     }
   }
 
@@ -83,13 +103,16 @@ export default function JournalDashboardPage() {
   // Đảm bảo xoá đúng key token
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("role");
     navigate("/login");
   };
 
   // Entry mới nhất để Continue
-  const latestEntry = useMemo(() => (recent && recent.length ? recent[0] : null), [recent]);
+  const latestEntry = useMemo(
+    () => (recent && recent.length ? recent[0] : null),
+    [recent]
+  );
 
   const goContinue = () => {
     if (!latestEntry?._id) {
@@ -110,12 +133,22 @@ export default function JournalDashboardPage() {
           <button className="jr-btn ghost" onClick={() => navigate("/journal")}>
             + New Journal
           </button>
-          <button className="jr-btn ghost" onClick={handleLogout}>Logout</button>
+          <button className="jr-btn ghost" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
 
       {/* Quick actions */}
-      <section className="jr-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <section
+        className="jr-card"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
         <div>
           <h3 style={{ margin: 0 }}>Jump back in</h3>
           <p style={{ margin: "4px 0", color: "#6b7280" }}>
@@ -123,17 +156,31 @@ export default function JournalDashboardPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="jr-btn" onClick={goContinue} disabled={loadingRecent}>
-            {loadingRecent ? "Loading…" : latestEntry ? "Continue Writing" : "Start Writing"}
+          <button
+            className="jr-btn"
+            onClick={goContinue}
+            disabled={loadingRecent}
+          >
+            {loadingRecent
+              ? "Loading…"
+              : latestEntry
+              ? "Continue Writing"
+              : "Start Writing"}
           </button>
-          <button className="jr-btn ghost" onClick={() => navigate("/journal")}>Open Journal List</button>
+          <button className="jr-btn ghost" onClick={() => navigate("/journal")}>
+            Open Journal List
+          </button>
         </div>
       </section>
 
       {/* Period Filter */}
       <div className="jr-filter">
         <label>Period:</label>
-        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="jr-select">
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          className="jr-select"
+        >
           <option value="day">Day</option>
           <option value="week">Week</option>
           <option value="month">Month</option>
@@ -177,9 +224,24 @@ export default function JournalDashboardPage() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="happy" stroke="#22c55e" name="Happy" />
-                    <Line type="monotone" dataKey="sad" stroke="#8b5cf6" name="Sad" />
-                    <Line type="monotone" dataKey="calm" stroke="#f59e0b" name="Calm" />
+                    <Line
+                      type="monotone"
+                      dataKey="happy"
+                      stroke="#22c55e"
+                      name="Happy"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="sad"
+                      stroke="#8b5cf6"
+                      name="Sad"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="calm"
+                      stroke="#f59e0b"
+                      name="Calm"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -188,16 +250,27 @@ export default function JournalDashboardPage() {
 
           {/* Recent Journals */}
           <section className="jr-card" style={{ marginTop: 32 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <h3 style={{ margin: 0 }}>Recent Journals</h3>
-              <button className="jr-btn ghost" onClick={loadRecent} disabled={loadingRecent}>
+              <button
+                className="jr-btn ghost"
+                onClick={loadRecent}
+                disabled={loadingRecent}
+              >
                 {loadingRecent ? "Refreshing…" : "Refresh"}
               </button>
             </div>
 
             {!loadingRecent && recent.length === 0 && (
               <div className="jr-empty" style={{ marginTop: 10 }}>
-                No recent entries. Click <strong>“+ New Journal”</strong> to start writing.
+                No recent entries. Click <strong>“+ New Journal”</strong> to
+                start writing.
               </div>
             )}
 
@@ -206,17 +279,27 @@ export default function JournalDashboardPage() {
                 {recent.map((e) => (
                   <div key={e._id} className="jr-list-item">
                     <div className="jr-list-meta">
-                      <div className="jr-list-title">{e.title || "Untitled"}</div>
+                      <div className="jr-list-title">
+                        {e.title || "Untitled"}
+                      </div>
                       <div className="jr-list-sub">
                         <span className={`jr-mood ${e.mood}`}>{e.mood}</span>
                         <span style={{ marginLeft: 8, opacity: 0.75 }}>
-                          {new Date(e.updatedAt || e.createdAt || Date.now()).toLocaleString()}
+                          {new Date(
+                            e.updatedAt || e.createdAt || Date.now()
+                          ).toLocaleString()}
                         </span>
                       </div>
                     </div>
-                    <div className="jr-list-actions" style={{ display: "flex", gap: 8 }}>
+                    <div
+                      className="jr-list-actions"
+                      style={{ display: "flex", gap: 8 }}
+                    >
                       {/* 🔽 Nút viết tiếp (mở trang editor) */}
-                      <button className="jr-btn" onClick={() => navigate(`/journals/${e._id}/edit`)}>
+                      <button
+                        className="jr-btn"
+                        onClick={() => navigate(`/journals/${e._id}/edit`)}
+                      >
                         Continue Writing
                       </button>
                       {/* Tuỳ chọn: mở danh sách nếu muốn quick edit trong list */}
@@ -236,7 +319,10 @@ export default function JournalDashboardPage() {
                 value={focusAreas.join(",")}
                 onChange={(e) =>
                   setFocusAreas(
-                    e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                    e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
                   )
                 }
                 placeholder="Focus areas (comma separated)"
@@ -246,17 +332,23 @@ export default function JournalDashboardPage() {
                 type="number"
                 min={1}
                 value={duration}
-                onChange={(e) => setDuration(Math.max(1, Number(e.target.value)))}
+                onChange={(e) =>
+                  setDuration(Math.max(1, Number(e.target.value)))
+                }
                 className="jr-input"
               />
-              <button className="jr-btn" onClick={loadPlan}>Generate Plan</button>
+              <button className="jr-btn" onClick={loadPlan}>
+                Generate Plan
+              </button>
             </div>
             {plan && (
               <div className="jr-plan">
                 <h4>Focus Areas: {plan.focusAreas?.join(", ")}</h4>
                 <p>Duration: {plan.duration ?? duration} days</p>
                 <ul>
-                  {(plan.steps || []).map((s, i) => <li key={i}>{s}</li>)}
+                  {(plan.steps || []).map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -264,7 +356,9 @@ export default function JournalDashboardPage() {
         </div>
       )}
 
-      <footer className="jr-footer">© {new Date().getFullYear()} My Journal</footer>
+      <footer className="jr-footer">
+        © {new Date().getFullYear()} My Journal
+      </footer>
     </div>
   );
 }

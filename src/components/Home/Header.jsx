@@ -121,8 +121,7 @@ function Header() {
   const refreshAuth = useCallback(() => setAuth(readUser()), []);
   useEffect(() => {
     const onStorage = (e) => {
-      if (["access_token", "user", "refresh_token"].includes(e.key))
-        refreshAuth();
+      if (["access_token", "user"].includes(e.key)) refreshAuth();
     };
     const onFocus = () => refreshAuth();
     const onAuthChanged = () => refreshAuth();

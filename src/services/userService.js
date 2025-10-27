@@ -20,7 +20,6 @@ export async function deleteMyAccount() {
   const { data } = await api.delete("/users/me");
   // dọn localStorage sau khi xoá
   localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
   localStorage.removeItem("user");
   return data; // { message: "Deleted" }
 }
