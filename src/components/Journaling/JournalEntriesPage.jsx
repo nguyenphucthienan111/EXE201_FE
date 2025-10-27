@@ -527,7 +527,7 @@ export default function JournalEntriesPage() {
                 </button>
                 <button onClick={() => openModal(e)}>Edit</button>
                 <button onClick={() => handleDelete(e._id)}>Delete</button>
-                <button onClick={() => doMarkSynced(e._id)}>Mark Synced</button>
+                {/* <button onClick={() => doMarkSynced(e._id)}>Mark Synced</button> */}
                 <button onClick={() => viewAIHistory(e)}>
                   View AI History
                 </button>
