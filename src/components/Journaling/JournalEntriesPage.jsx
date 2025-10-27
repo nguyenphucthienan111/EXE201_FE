@@ -165,8 +165,8 @@ export default function JournalEntriesPage() {
         null;
 
       setCurrentTemplateId(curTpl);
-      setUseTemplate(!!curTpl);          // nếu có template thì bật sẵn
-      setSelectedTemplateId(curTpl);     // preselect trong gallery
+      setUseTemplate(!!curTpl); // nếu có template thì bật sẵn
+      setSelectedTemplateId(curTpl); // preselect trong gallery
 
       setIsPremiumActive(null);
       setTemplates([]);
@@ -297,7 +297,11 @@ export default function JournalEntriesPage() {
       );
 
       // 2) nếu chọn template khác template hiện tại thì apply
-      if (useTemplate && selectedTemplateId && selectedTemplateId !== currentTemplateId) {
+      if (
+        useTemplate &&
+        selectedTemplateId &&
+        selectedTemplateId !== currentTemplateId
+      ) {
         try {
           await applyTemplate(selectedTemplateId, editing._id);
 
@@ -695,16 +699,15 @@ export default function JournalEntriesPage() {
                             currentTemplateId &&
                             String(currentTemplateId) === String(tid);
                           const premium = isTplPremium(t);
-                          const disabled =
-                            premium && isPremiumActive === false;
+                          const disabled = premium && isPremiumActive === false;
 
                           return (
                             <button
                               key={tid}
                               type="button"
-                              className={`tpl-item ${isSel ? "is-active" : ""} ${
-                                disabled ? "is-disabled" : ""
-                              }`}
+                              className={`tpl-item ${
+                                isSel ? "is-active" : ""
+                              } ${disabled ? "is-disabled" : ""}`}
                               onClick={() => {
                                 if (disabled) {
                                   alert("Premium only");
@@ -740,7 +743,8 @@ export default function JournalEntriesPage() {
                                   alt={t.name}
                                   loading="lazy"
                                   onError={(e) =>
-                                    (e.currentTarget.style.visibility = "hidden")
+                                    (e.currentTarget.style.visibility =
+                                      "hidden")
                                   }
                                 />
                               ) : (
@@ -1102,8 +1106,8 @@ export default function JournalEntriesPage() {
                         </div>
                         <div style={{ fontSize: "12px", color: "#6b7280" }}>
                           Score:{" "}
-                          {analysis.results?.sentimentAnalysis?.sentimentScore ||
-                            "N/A"}
+                          {analysis.results?.sentimentAnalysis
+                            ?.sentimentScore || "N/A"}
                         </div>
                       </div>
                     </div>
