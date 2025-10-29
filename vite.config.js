@@ -25,7 +25,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ["react", "react-dom"],
-          quill: ["react-quill"],
+          quill: [
+            "react-quill",
+            "quill-blot-formatter",
+            "quill-image-drop-and-paste",
+          ],
           router: ["react-router-dom"],
           charts: ["recharts"],
           utils: ["axios", "html2pdf.js"],
