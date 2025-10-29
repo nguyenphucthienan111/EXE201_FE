@@ -80,6 +80,7 @@ const LoginPage = () => {
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [rememberMe, setRememberMe] = useState(true);
   // eslint-disable-next-line no-unused-vars
   const [loginError, setLoginError] = useState("");

@@ -1346,3 +1346,180 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+/* ----- Glass layer cho toàn vùng editor (trừ viền) ----- */
+.editor-container.glass { position: relative; overflow: hidden; }
+
+/* lớp mờ + trắng bán trong suốt chỉ để tăng tương phản */
+/* nhẹ tay thôi: ít blur + ít trắng */
+.editor-container.glass::before{
+  content:"";
+  position:absolute;
+  inset:64px 12px 12px;
+  background: rgba(255, 255, 255, 0.158);       /* ↓ từ .55 còn .22 */
+  backdrop-filter: blur(3px) saturate(105%);/* ↓ từ blur(8px) còn 3px */
+  -webkit-backdrop-filter: blur(3px) saturate(105%);
+  border-radius: 12px;
+  pointer-events:none;
+  z-index:0;
+  box-shadow: none;                         /* bỏ inset shadow để đỡ “xám” */
+}
+/* chữ tối lại cho hợp nền sáng */
+.journal-quill .ql-editor{ color:#0f172a; }
+
+
+/* Title nổi bật nhưng vẫn thấy nền */
+.export-title{
+  position: relative;
+  z-index: 1;
+  margin: 4px 8px 12px;
+  color: #1f2937;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255,255,255,.6);
+  background: rgba(255,255,255,.6);
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+/* Quill – làm trong suốt phần nền để thấy glass phía sau */
+.journal-quill .ql-container { 
+  background: transparent !important;
+  border: none !important;
+  position: relative; 
+  z-index: 1;               /* nằm trên lớp glass */
+}
+.journal-quill .ql-editor{
+  min-height: 560px;
+  color: #111827;           /* chữ đậm cho nền sáng */
+  line-height: 1.6;
+  padding: 16px 18px;
+}
+.journal-quill .ql-editor.ql-blank::before{
+  color: rgba(17,24,39,.55);
+}
+
+/* Toolbar cũng “glass” nhẹ */
+.journal-quill .ql-toolbar{
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none !important;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.journal-quill .ql-toolbar {
+  position: relative;
+  z-index: 10;
+}
+
+.journal-quill .ql-picker-options {
+  position: absolute;   /* nổi lên */
+  top: 100%;            /* ngay dưới picker */
+  left: 0;
+  z-index: 20;          /* cao hơn editor */
+  background: white;    /* dễ đọc */
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+/* Quill tạo class ql-align-left/right/center khi bạn canh lề ảnh */
+.ql-editor img { 
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Quấn chữ quanh ảnh (float) – dùng khi ảnh align left/right */
+.ql-editor img.ql-align-left {
+  float: left;
+  margin: 6px 14px 10px 0;   /* chữ ôm sát ảnh */
+}
+.ql-editor img.ql-align-right {
+  float: right;
+  margin: 6px 0 10px 14px;
+}
+.ql-editor img.ql-align-center {
+  display: block;
+  margin: 8px auto;
+  float: none;
+}
+
+/* Nếu ảnh bị “kẹt” float, thêm clear cho các đoạn sau */
+.ql-editor p.clear { clear: both; }
+/* Label cho 3 nút S/M/L */
+.ql-toolbar button.ql-image-s::before { content: "S"; font-weight:600; }
+.ql-toolbar button.ql-image-m::before { content: "M"; font-weight:600; }
+.ql-toolbar button.ql-image-l::before { content: "L"; font-weight:600; }
+
+/* Ảnh hiển thị đẹp, không vỡ */
+.journal-quill .ql-editor img{
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Quấn chữ quanh ảnh khi dùng Align (chọn ảnh rồi bấm Align trên toolbar) */
+.journal-quill .ql-editor img.ql-align-left{
+  float: left;
+  margin: 6px 14px 10px 0;
+}
+.journal-quill .ql-editor img.ql-align-right{
+  float: right;
+  margin: 6px 0 10px 14px;
+}
+.journal-quill .ql-editor img.ql-align-center{
+  display: block;
+  margin: 8px auto;
+  float: none;
+}
+/* Hiển thị nhãn cho nút Free */
+.ql-toolbar button.ql-image-free::before {
+  content: "Free";
+  font-weight: 600;
+}
+
+/* Đảm bảo định vị tương đối để absolute hoạt động trong editor */
+.journal-quill .ql-editor { position: relative; }
+
+/* Khung tự do */
+.journal-quill .ql-editor .free-img{
+  position: absolute;
+  z-index: 5;                  /* nổi trên text */
+  cursor: move;
+  user-select: none;
+}
+.journal-quill .ql-editor .free-img img{
+  display: block;
+  pointer-events: none;        /* để drag wrapper không bắt vào ảnh */
+  max-width: none;             /* cho phép vượt kích thước inline */
+}
+/* Ẩn thanh công cụ & overlay khi đang export */
+.editor-container.exporting .ql-toolbar,
+.editor-container.exporting .ql-tooltip,
+.editor-container.exporting .ql-picker-options,
+.editor-container.exporting .blot-formatter,          /* khung resize */
+.editor-container.exporting .blot-formatter__overlay, /* overlay resize */
+.editor-container.exporting .blot-formatter__tooltip {
+  display: none !important;
+}
+
+/* bỏ khoảng trống dưới toolbar khi ẩn */
+.editor-container.exporting .journal-quill .ql-editor {
+  padding-top: 0 !important;
+}
+
+/* Trường hợp người dùng bấm In (Cmd/Ctrl+P) */
+@media print {
+  .ql-toolbar,
+  .ql-tooltip,
+  .ql-picker-options,
+  .blot-formatter,
+  .blot-formatter__overlay,
+  .blot-formatter__tooltip {
+    display: none !important;
+  }
+  .journal-quill .ql-editor { padding-top: 0 !important; }
+}
