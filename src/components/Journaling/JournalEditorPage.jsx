@@ -16,7 +16,7 @@ import AnalyzeResultModal from "../Journaling/AnalyzeResultModal";
 // Rich text editor
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { editorModules, editorFormats } from "../../config/quillConfig";
+import { editorModules, editorFormats, FONT_WHITELIST } from "../../config/quillConfig";
 import { htmlToText } from "../../utils/text";
 
 const moodLabel = {
@@ -481,6 +481,7 @@ export default function JournalEditorPage() {
           <h1 className="export-title">{title || "Untitled Journal"}</h1>
 
           <ReactQuill
+            key={`ql-${FONT_WHITELIST.join("|")}`}   // ép remount khi whitelist đổi
             className="journal-quill"
             theme="snow"
             value={content}

@@ -1,3 +1,50 @@
+/* Nạp Montserrat từ Google */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+/* Làm đẹp label dropdown Font (vì v2 dùng style inline, không cần .ql-font-*) */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="Montserrat"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="Montserrat"]::before {
+  content: "Montserrat";
+  font-family: 'Montserrat', sans-serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="Times New Roman"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="Times New Roman"]::before {
+  content: "Times New Roman";
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="sans-serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="sans-serif"]::before {
+  content: "Sans Serif";
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="serif"]::before {
+  content: "Serif";
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="monospace"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="monospace"]::before {
+  content: "Monospace";
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+/* Nới rộng dropdown chọn font trong Quill */
+.ql-snow .ql-picker.ql-font {
+  min-width: 180px;   /* tăng chiều rộng menu */
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-options {
+  min-width: 180px;   /* nới rộng menu option */
+}
+
+/* Nếu muốn option hiển thị rõ hơn */
+.ql-snow .ql-picker.ql-font .ql-picker-item {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+
 /* =======================
    Tokens / Theme (giữ màu cũ dịu hơn)
    ======================= */

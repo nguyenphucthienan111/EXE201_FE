@@ -7,8 +7,24 @@ import {
   fetchAdminPayments,
 } from "../../services/adminService";
 import "../style/AdminDashboard.css";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 import PropTypes from "prop-types";
+
+/** Map giá trị UI -> tham số API */
+const PERIOD_PARAM = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+  yearly: "year",
+};
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -34,9 +50,17 @@ export default function AdminDashboard() {
   const stats = data?.stats || {};
   const recentSubscribers = data?.recentSubscribers || [];
   const expiringSubscriptions = data?.expiringSubscriptions || [];
+
+  // summary hiển thị trên các thẻ nhỏ
   const revenueStats = useMemo(
     () => revenue?.data?.summary || data?.revenueStats || {},
     [revenue, data]
+  );
+
+  // series để vẽ chart (API nên trả [{label, amount}] hoặc điều chỉnh khóa bên dưới cho khớp)
+  const revenueSeries = useMemo(
+    () => revenue?.data?.series || [],
+    [revenue]
   );
 
   const loadAll = async () => {
@@ -62,7 +86,8 @@ export default function AdminDashboard() {
     setRevErr("");
     setRevLoading(true);
     try {
-      const res = await fetchRevenueAnalytics(p);
+      const apiPeriod = PERIOD_PARAM[p] || p;
+      const res = await fetchRevenueAnalytics(apiPeriod);
       setRevenue(res?.data || null);
     } catch (e) {
       const m =
@@ -80,7 +105,7 @@ export default function AdminDashboard() {
     setHealthLoading(true);
     try {
       const res = await fetchSystemHealth();
-    setHealth(res?.data?.data || null);
+      setHealth(res?.data?.data || null);
     } catch (e) {
       const m =
         e?.response?.data?.message ||
@@ -94,13 +119,8 @@ export default function AdminDashboard() {
 
   const normalizeUser = (obj) => {
     if (!obj) return { name: null, email: null };
-    // Hỗ trợ nhiều kiểu field khác nhau
     const name =
-      obj.name ||
-      obj.fullName ||
-      obj.username ||
-      obj.displayName ||
-      null;
+      obj.name || obj.fullName || obj.username || obj.displayName || null;
     const email = obj.email || null;
     return { name, email };
   };
@@ -116,9 +136,7 @@ export default function AdminDashboard() {
       });
 
       const raw = res?.data?.data?.payments || [];
-      // Chuẩn hóa để luôn có __name / __email
       const norm = raw.map((p) => {
-        // BE có thể trả user (populated) hoặc userId (object có email) hoặc chỉ id
         const u = p.user || p.userId || {};
         const { name, email } = normalizeUser(u);
         return { ...p, __name: name, __email: email };
@@ -163,8 +181,15 @@ export default function AdminDashboard() {
       <header className="ad-header">
         <h1>Admin Dashboard</h1>
         <div className="ad-actions">
-          <button className="ad-btn" onClick={loadAll} disabled={loading}>
-            {loading ? "Loading..." : "Refresh"}
+          <button
+            className="ad-btn"
+            onClick={() => {
+              loadAll();
+              loadRevenue(period);
+            }}
+            disabled={loading || revLoading}
+          >
+            {loading || revLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
       </header>
@@ -231,33 +256,66 @@ export default function AdminDashboard() {
 
             {revErr && <div className="ad-alert error">{revErr}</div>}
 
-            <div className="ad-revenue-grid">
-              {Object.keys(revenueStats || {}).length === 0 ? (
-                <div className="ad-empty">No revenue data.</div>
+            {/* Summary cards */}
+            {revLoading ? (
+              <div className="ad-skel-panel" style={{ height: 140, marginTop: 8 }} />
+            ) : (
+              <div className="ad-revenue-grid">
+                {Object.keys(revenueStats || {}).length === 0 ? (
+                  <div className="ad-empty">No revenue data.</div>
+                ) : (
+                  Object.entries(revenueStats).map(([k, v]) => (
+                    <div className="ad-rev-item" key={k}>
+                      <div className="ad-rev-key">{toTitle(k)}</div>
+                      <div className="ad-rev-val">
+                        {typeof v === "number" ? v.toLocaleString() : String(v)}
+                      </div>
+                      <div className="ad-spark">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={[{ val: 0 }, { val: v * 0.6 }, { val: v }]}
+                          >
+                            <Line
+                              type="monotone"
+                              dataKey="val"
+                              stroke="#7c3aed"
+                              strokeWidth={2}
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Timeseries chart */}
+            <div className="ad-panel" style={{ marginTop: 16 }}>
+              {revLoading ? (
+                <div className="ad-skel-panel" style={{ height: 300 }} />
+              ) : revenueSeries && revenueSeries.length ? (
+                <div style={{ width: "100%", height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={revenueSeries}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      {/* chỉnh lại dataKey cho đúng khóa trả về từ API */}
+                      <XAxis dataKey="label" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#7c3aed"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
-                Object.entries(revenueStats).map(([k, v]) => (
-                  <div className="ad-rev-item" key={k}>
-                    <div className="ad-rev-key">{toTitle(k)}</div>
-                    <div className="ad-rev-val">
-                      {typeof v === "number" ? v.toLocaleString() : String(v)}
-                    </div>
-                    <div className="ad-spark">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={[{ val: 0 }, { val: v * 0.6 }, { val: v }]}
-                        >
-                          <Line
-                            type="monotone"
-                            dataKey="val"
-                            stroke="#7c3aed"
-                            strokeWidth={2}
-                            dot={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                ))
+                <div className="ad-empty">No timeseries data for this period.</div>
               )}
             </div>
           </section>
@@ -384,8 +442,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {!expiringSubscriptions ||
-                  expiringSubscriptions.length === 0 ? (
+                  {!expiringSubscriptions || expiringSubscriptions.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="ad-empty">
                         No expiring subscriptions.
