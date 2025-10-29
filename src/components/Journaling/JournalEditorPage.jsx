@@ -469,9 +469,7 @@ export default function JournalEditorPage() {
 
         <div
           ref={exportRef}
-          className={`editor-container no-overlay${
-            exporting ? " exporting" : ""
-          }`}
+          className={`editor-container glass ${exporting ? " exporting" : ""}`}
           style={{
             backgroundImage: templateUrl ? `url(${templateUrl})` : "none",
             backgroundSize: "cover",
@@ -483,6 +481,7 @@ export default function JournalEditorPage() {
           <h1 className="export-title">{title || "Untitled Journal"}</h1>
 
           <ReactQuill
+            className="journal-quill"
             theme="snow"
             value={content}
             onChange={setContent}
@@ -490,7 +489,9 @@ export default function JournalEditorPage() {
             formats={editorFormats}
             placeholder="Start journaling..."
             style={{ minHeight: 600, borderRadius: 10 }}
-            readOnly={locked} // 🔒 khóa editor khi AI đang chạy
+            readOnly={locked}
+            bounds=".editor-container" // ⬅️ NEW
+            scrollingContainer=".editor-container" // ⬅️ NEW
           />
         </div>
 

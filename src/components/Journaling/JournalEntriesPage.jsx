@@ -392,6 +392,7 @@ export default function JournalEntriesPage() {
   }
 
   // Mark synced
+  // eslint-disable-next-line no-unused-vars
   async function doMarkSynced(id) {
     try {
       await markSynced(id);
