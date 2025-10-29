@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState("");
   const [stats, setStats] = useState(null);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState(""); 
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -227,7 +227,7 @@ export default function ProfilePage() {
       setShowSuccessNotification(true);
 
       setTimeout(() => {
-        window.location.href = "/login";
+      window.location.href = "/login";
       }, 2000);
     } catch (e) {
       setErr(e?.response?.data?.message || e.message);
@@ -277,8 +277,8 @@ export default function ProfilePage() {
           </div>
 
           <div className="profile-info">
-            <h1>My Profile</h1>
-            {profile && (
+        <h1>My Profile</h1>
+        {profile && (
               <div className="profile-details">
                 <div className="profile-detail">
                   <span className="label">Email:</span>
@@ -300,8 +300,8 @@ export default function ProfilePage() {
                     {profile.isEmailVerified ? "✓ Verified" : "⚠ Unverified"}
                   </span>
                 </div>
-              </div>
-            )}
+          </div>
+        )}
           </div>
         </div>
 
@@ -313,18 +313,18 @@ export default function ProfilePage() {
             <form onSubmit={onSave} className="profile-form">
               <div className="form-group">
                 <label htmlFor="name">Your Name</label>
-                <input
+          <input
                   id="name"
-                  className="auth-input"
+            className="auth-input"
                   placeholder="Enter your name"
-                  value={name}
+            value={name}
                   onChange={(e) => setName(e.target.value)}
-                />
+          />
               </div>
               <button type="submit" className="auth-btn" disabled={loading}>
                 {loading ? "Saving..." : "Save Changes"}
-              </button>
-            </form>
+          </button>
+        </form>
           </div>
 
           {/* Security Settings */}
@@ -347,7 +347,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Statistics */}
-          {stats && (
+        {stats && (
             <div className="profile-section">
               <h2>Your Statistics</h2>
               <div className="stats-grid">
@@ -443,8 +443,8 @@ export default function ProfilePage() {
                 Upgrade to Premium to upload your own journal backgrounds and
                 unlock extra template designs tailored to your mood.
               </p>
-            </div>
-          )}
+          </div>
+        )}
 
           {/* Danger Zone */}
           <div className="profile-section danger-zone">
@@ -611,9 +611,9 @@ export default function ProfilePage() {
                 disabled={deletingTemplate}
               >
                 {deletingTemplate ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
+          </button>
+        </div>
+      </div>
         </div>
       )}
     </div>
