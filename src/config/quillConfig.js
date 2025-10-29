@@ -18,8 +18,8 @@ export const FONT_WHITELIST = [
   "sans-serif",
   "serif",
   "monospace",
-  "Montserrat",        // <- tên đúng của font
-  "Times New Roman",   // <- có khoảng trắng OK với style attributor
+  "Montserrat", // <- tên đúng của font
+  "Times New Roman", // <- có khoảng trắng OK với style attributor
 ];
 
 Font.whitelist = FONT_WHITELIST;
@@ -32,7 +32,9 @@ Quill.register(Font, true);
 
 /* Helper: đổi nhanh chiều rộng ảnh đang chọn */
 function setSelectedImageWidth(width = "50%") {
-  const img = document.getSelection()?.anchorNode?.parentElement?.closest("img");
+  const img = document
+    .getSelection()
+    ?.anchorNode?.parentElement?.closest("img");
   if (!img) return;
   img.style.width = width;
   img.style.maxWidth = "100%";
@@ -42,7 +44,7 @@ function setSelectedImageWidth(width = "50%") {
 export const editorModules = {
   toolbar: {
     container: [
-      [{ font: FONT_WHITELIST }],   // dùng đúng whitelist ở trên
+      [{ font: FONT_WHITELIST }], // dùng đúng whitelist ở trên
       [{ size: [] }],
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline", "strike"],
@@ -71,7 +73,21 @@ export const editorModules = {
 };
 
 export const editorFormats = [
-  "header","font","size","bold","italic","underline","strike",
-  "color","background","script","list","bullet","align",
-  "blockquote","code-block","link","image",
+  "header",
+  "font",
+  "size",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "script",
+  "list",
+  "bullet",
+  "align",
+  "blockquote",
+  "code-block",
+  "link",
+  "image",
 ];
