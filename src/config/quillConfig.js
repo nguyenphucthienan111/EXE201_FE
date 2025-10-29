@@ -1,11 +1,11 @@
 // src/config/quillConfig.js
 import Quill from "quill";
-import BlotFormatter from "quill-blot-formatter";
-import ImageDropAndPaste from "quill-image-drop-and-paste";
+// import BlotFormatter from "quill-blot-formatter";
+// import ImageDropAndPaste from "quill-image-drop-and-paste";
 
 // Đăng ký module cho Quill (enable resize + kéo-thả/dán ảnh)
-Quill.register("modules/blotFormatter", BlotFormatter);
-Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
+// TẠMTHỜI TẮT: Quill.register("modules/blotFormatter", BlotFormatter);
+// TẠMTHỜI TẮT: Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
 
 // Helper: đổi nhanh chiều rộng ảnh đang được chọn
 function setSelectedImageWidth(width = "50%") {
@@ -26,10 +26,10 @@ export const editorModules = {
       [{ color: [] }, { background: [] }],
       [{ script: "sub" }, { script: "super" }],
       [{ list: "ordered" }, { list: "bullet" }],
-      [{ align: [] }],                     // chọn align khi đang chọn ảnh -> sẽ áp vào ảnh
+      [{ align: [] }], // chọn align khi đang chọn ảnh -> sẽ áp vào ảnh
       ["blockquote", "code-block"],
-      ["link", "image"],                    // nút chèn ảnh
-      ["image-s", "image-m", "image-l"],    // preset S/M/L cho ảnh (custom)
+      ["link", "image"], // nút chèn ảnh
+      ["image-s", "image-m", "image-l"], // preset S/M/L cho ảnh (custom)
       ["clean"],
     ],
     handlers: {
@@ -38,12 +38,13 @@ export const editorModules = {
       "image-l": () => setSelectedImageWidth("100%"),
     },
   },
-  blotFormatter: {
-    // có khung resize khi click vào ảnh
-  },
-  imageDropAndPaste: {
-    // cho phép kéo-thả / Ctrl+V ảnh trực tiếp
-  },
+  // TẠMTHỜI TẮT để fix lỗi build
+  // blotFormatter: {
+  //   // có khung resize khi click vào ảnh
+  // },
+  // imageDropAndPaste: {
+  //   // cho phép kéo-thả / Ctrl+V ảnh trực tiếp
+  // },
 };
 
 export const editorFormats = [

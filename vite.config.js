@@ -25,11 +25,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ["react", "react-dom"],
-          quill: [
-            "react-quill",
-            "quill-blot-formatter",
-            "quill-image-drop-and-paste",
-          ],
+          quill: ["react-quill"],
           router: ["react-router-dom"],
           charts: ["recharts"],
           utils: ["axios", "html2pdf.js"],
@@ -44,11 +40,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: [
-      "react-quill",
-      "quill-blot-formatter",
-      "quill-image-drop-and-paste",
-    ],
+    include: ["react-quill"],
   },
   server: {
     proxy: {
