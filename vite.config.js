@@ -40,7 +40,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ["react-quill"],
+    include: ["react-quill", "quill-blot-formatter", "quill-image-drop-and-paste"],
   },
   server: {
     proxy: {
