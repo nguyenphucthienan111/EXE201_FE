@@ -26,10 +26,9 @@ Font.whitelist = FONT_WHITELIST;
 Quill.register(Font, true);
 
 /* ---------- Modules ảnh ---------- */
-// eslint-disable-next-line no-undef
-Quill.register("modules/blotFormatter", BlotFormatter);
-// eslint-disable-next-line no-undef
-Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
+// DISABLED: Quill plugins not compatible with Vite production build
+// Quill.register("modules/blotFormatter", BlotFormatter);
+// Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
 
 /* Helper: đổi nhanh chiều rộng ảnh đang chọn */
 function setSelectedImageWidth(width = "50%") {
