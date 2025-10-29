@@ -3,14 +3,37 @@ import Quill from "quill";
 // import BlotFormatter from "quill-blot-formatter";
 // import ImageDropAndPaste from "quill-image-drop-and-paste";
 
-// Đăng ký module cho Quill (enable resize + kéo-thả/dán ảnh)
-// TẠMTHỜI TẮT: Quill.register("modules/blotFormatter", BlotFormatter);
-// TẠMTHỜI TẮT: Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
+/* ---------- Font whitelist: v2 (style) ưu tiên, fallback v1 (formats) ---------- */
+let Font;
+try {
+  // Quill v2
+  Font = Quill.import("attributors/style/font");
+} catch {
+  // Quill v1 fallback
+  Font = Quill.import("formats/font");
+}
 
-// Helper: đổi nhanh chiều rộng ảnh đang được chọn
+/** Dùng chính tên font-family (v2 sẽ set style inline) */
+export const FONT_WHITELIST = [
+  "sans-serif",
+  "serif",
+  "monospace",
+  "Montserrat",        // <- tên đúng của font
+  "Times New Roman",   // <- có khoảng trắng OK với style attributor
+];
+
+Font.whitelist = FONT_WHITELIST;
+Quill.register(Font, true);
+
+/* ---------- Modules ảnh ---------- */
+// eslint-disable-next-line no-undef
+Quill.register("modules/blotFormatter", BlotFormatter);
+// eslint-disable-next-line no-undef
+Quill.register("modules/imageDropAndPaste", ImageDropAndPaste);
+
+/* Helper: đổi nhanh chiều rộng ảnh đang chọn */
 function setSelectedImageWidth(width = "50%") {
-  const sel = document.getSelection();
-  const img = sel?.anchorNode?.parentElement?.closest("img");
+  const img = document.getSelection()?.anchorNode?.parentElement?.closest("img");
   if (!img) return;
   img.style.width = width;
   img.style.maxWidth = "100%";
@@ -20,7 +43,8 @@ function setSelectedImageWidth(width = "50%") {
 export const editorModules = {
   toolbar: {
     container: [
-      [{ font: [] }, { size: [] }],
+      [{ font: FONT_WHITELIST }],   // dùng đúng whitelist ở trên
+      [{ size: [] }],
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline", "strike"],
       [{ color: [] }, { background: [] }],
@@ -48,21 +72,7 @@ export const editorModules = {
 };
 
 export const editorFormats = [
-  "header",
-  "font",
-  "size",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "color",
-  "background",
-  "script",
-  "list",
-  "bullet",
-  "align",
-  "blockquote",
-  "code-block",
-  "link",
-  "image",
+  "header","font","size","bold","italic","underline","strike",
+  "color","background","script","list","bullet","align",
+  "blockquote","code-block","link","image",
 ];
