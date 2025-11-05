@@ -335,29 +335,61 @@ export default function AdminDashboard() {
                 {Object.keys(revenueStats || {}).length === 0 ? (
                   <div className="ad-empty">No revenue data.</div>
                 ) : (
-                  Object.entries(revenueStats).map(([k, v]) => (
-                    <div className="ad-rev-item" key={k}>
-                      <div className="ad-rev-key">{toTitle(k)}</div>
-                      <div className="ad-rev-val">
-                        {typeof v === "number" ? v.toLocaleString() : String(v)}
+                  Object.entries(revenueStats).map(([k, v]) => {
+                    const isCurrent = k === "currentPeriodRevenue";
+                    const sparkData = isCurrent
+                      ? revenueSeries.map((p) => ({
+                          label: p.label,
+                          val: p.amount,
+                        }))
+                      : [
+                          { val: 0 },
+                          { val: Number(v) * 0.6 },
+                          { val: Number(v) },
+                        ];
+
+                    return (
+                      <div className="ad-rev-item" key={k}>
+                        <div className="ad-rev-key">{toTitle(k)}</div>
+                        <div className="ad-rev-val">
+                          {typeof v === "number"
+                            ? v.toLocaleString()
+                            : String(v)}
+                        </div>
+                        <div className="ad-spark">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={sparkData}>
+                              {isCurrent ? null : (
+                                <CartesianGrid strokeDasharray="3 3" />
+                              )}
+                              {isCurrent ? null : (
+                                <XAxis dataKey="label" hide />
+                              )}
+                              {isCurrent ? null : <YAxis hide />}
+                              <Tooltip
+                                wrapperStyle={{ padding: 0 }}
+                                labelFormatter={(l) =>
+                                  isCurrent ? String(l) : ""
+                                }
+                                formatter={(val) =>
+                                  typeof val === "number"
+                                    ? [val.toLocaleString(), "Revenue"]
+                                    : [String(val), "Revenue"]
+                                }
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="val"
+                                stroke="#7c3aed"
+                                strokeWidth={2}
+                                dot={isCurrent}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                      <div className="ad-spark">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={[{ val: 0 }, { val: v * 0.6 }, { val: v }]}
-                          >
-                            <Line
-                              type="monotone"
-                              dataKey="val"
-                              stroke="#7c3aed"
-                              strokeWidth={2}
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
