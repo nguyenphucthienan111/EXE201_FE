@@ -59,11 +59,76 @@ export default function AdminDashboard() {
 
   // series để vẽ chart (API nên trả [{label, amount}] hoặc điều chỉnh khóa bên dưới cho khớp)
   const revenueSeries = useMemo(() => {
-    const trends = revenue?.data?.trends || revenue?.data?.series || [];
-    return trends.map((t) => ({
-      label: t._id || t.label,
-      amount: t.revenue ?? t.amount ?? 0,
-    }));
+    const data = revenue?.data;
+    const trends = data?.trends || data?.series || [];
+    const period = data?.period || "monthly";
+    const range = data?.dateRange || {};
+
+    const map = new Map(
+      trends.map((t) => [
+        String(t._id || t.label),
+        Number(t.revenue ?? t.amount ?? 0),
+      ])
+    );
+
+    function padTimeline(period, range) {
+      const start = range?.start ? new Date(range.start) : null;
+      const end = range?.end ? new Date(range.end) : null;
+      if (!start || !end || isNaN(start) || isNaN(end)) {
+        return trends.map((t) => ({
+          label: String(t._id || t.label),
+          amount: Number(t.revenue ?? t.amount ?? 0),
+        }));
+      }
+
+      const result = [];
+      const cur = new Date(start);
+
+      const fmtDaily = (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(d.getDate()).padStart(2, "0")}`;
+      const fmtMonthly = (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const fmtYearly = (d) => `${d.getFullYear()}`;
+      const fmtWeekly = (d) => {
+        const jan1 = new Date(d.getFullYear(), 0, 1);
+        const days = Math.floor((d - jan1) / 86400000);
+        const week = Math.floor((days + jan1.getDay()) / 7);
+        return `${d.getFullYear()}-${String(week).padStart(2, "0")}`; // match %Y-%U
+      };
+
+      const fmt =
+        period === "daily"
+          ? fmtDaily
+          : period === "weekly"
+          ? fmtWeekly
+          : period === "yearly"
+          ? fmtYearly
+          : fmtMonthly;
+      const step =
+        period === "daily"
+          ? (d) => d.setDate(d.getDate() + 1)
+          : period === "weekly"
+          ? (d) => d.setDate(d.getDate() + 7)
+          : period === "yearly"
+          ? (d) => d.setFullYear(d.getFullYear() + 1)
+          : (d) => d.setMonth(d.getMonth() + 1);
+
+      while (cur <= end) {
+        const key = fmt(cur);
+        result.push({ label: key, amount: map.get(key) ?? 0 });
+        step(cur);
+        if (period === "daily" || period === "weekly") cur.setHours(0, 0, 0, 0);
+        if (period === "monthly") cur.setDate(1);
+        if (period === "yearly") cur.setMonth(0, 1);
+      }
+
+      return result;
+    }
+
+    return padTimeline(period, range);
   }, [revenue]);
 
   const loadAll = async () => {
