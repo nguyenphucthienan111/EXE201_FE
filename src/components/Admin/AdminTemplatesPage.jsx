@@ -47,6 +47,23 @@ function toAbsoluteUrl(maybeUrl, HOST) {
   return HOST + "/" + maybeUrl;
 }
 
+/** Tối ưu URL Cloudinary: tự động định dạng + nén + resize để load nhanh */
+function optimizeCloudinary(
+  url,
+  { w = 240, h = 180, crop = "fill", gravity = "auto" } = {}
+) {
+  if (!url || typeof url !== "string") return url;
+  // Chỉ áp dụng cho Cloudinary
+  if (!/https?:\/\/res\.cloudinary\.com\//.test(url)) return url;
+  // Nếu đã có tham số transform thì giữ nguyên
+  if (/\/upload\/(?:v\d+\/)?(f_auto|q_auto|w_|h_|c_|g_)/.test(url)) return url;
+  // Chèn tham số sau /upload/
+  return url.replace(
+    /\/upload\//,
+    `/upload/f_auto,q_auto,w_${w},h_${h},c_${crop},g_${gravity}/`
+  );
+}
+
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -116,7 +133,8 @@ export default function AdminTemplatesPage() {
   }
 
   async function handleDelete(templateId) {
-    if (!window.confirm("Are you sure you want to delete this template?")) return;
+    if (!window.confirm("Are you sure you want to delete this template?"))
+      return;
     try {
       await deleteAdminTemplate(templateId);
       setSuccess("Template deleted successfully!");
@@ -157,9 +175,7 @@ export default function AdminTemplatesPage() {
             type="text"
             placeholder="Description"
             value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
             required
           />
 
@@ -214,9 +230,9 @@ export default function AdminTemplatesPage() {
           <div className="template-list">
             {templates.map((tpl, i) => {
               const rawImg = pickImageField(tpl);
-              const img = toAbsoluteUrl(rawImg, HOST);
-              const cat =
-                (tpl.category || "default").toString().toLowerCase();
+              const abs = toAbsoluteUrl(rawImg, HOST);
+              const img = optimizeCloudinary(abs, { w: 240, h: 180 });
+              const cat = (tpl.category || "default").toString().toLowerCase();
 
               return (
                 <div
@@ -246,6 +262,10 @@ export default function AdminTemplatesPage() {
                     {img ? (
                       <img
                         src={img}
+                        loading="lazy"
+                        decoding="async"
+                        width={88}
+                        height={66}
                         alt={tpl.name || "Template"}
                         style={{
                           width: "100%",
@@ -255,7 +275,8 @@ export default function AdminTemplatesPage() {
                         }}
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
-                          e.currentTarget.parentElement.textContent = "No image";
+                          e.currentTarget.parentElement.textContent =
+                            "No image";
                         }}
                       />
                     ) : (
@@ -277,8 +298,7 @@ export default function AdminTemplatesPage() {
                         display: "inline-block",
                         padding: "2px 8px",
                         borderRadius: 999,
-                        background:
-                          cat === "premium" ? "#fde2ff" : "#e9e7ff",
+                        background: cat === "premium" ? "#fde2ff" : "#e9e7ff",
                       }}
                     >
                       {cat}

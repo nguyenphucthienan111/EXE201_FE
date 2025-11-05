@@ -18,12 +18,12 @@ import {
 } from "recharts";
 import PropTypes from "prop-types";
 
-/** Map giá trị UI -> tham số API */
+/** Backend expects: daily | weekly | monthly | yearly */
 const PERIOD_PARAM = {
-  daily: "day",
-  weekly: "week",
-  monthly: "month",
-  yearly: "year",
+  daily: "daily",
+  weekly: "weekly",
+  monthly: "monthly",
+  yearly: "yearly",
 };
 
 export default function AdminDashboard() {
@@ -58,10 +58,10 @@ export default function AdminDashboard() {
   );
 
   // series để vẽ chart (API nên trả [{label, amount}] hoặc điều chỉnh khóa bên dưới cho khớp)
-  const revenueSeries = useMemo(
-    () => revenue?.data?.series || [],
-    [revenue]
-  );
+  const revenueSeries = useMemo(() => {
+    const trends = revenue?.data?.trends || revenue?.data?.series || [];
+    return trends.map((t) => ({ label: t._id || t.label, amount: t.revenue ?? t.amount ?? 0 }));
+  }, [revenue]);
 
   const loadAll = async () => {
     setErr("");
