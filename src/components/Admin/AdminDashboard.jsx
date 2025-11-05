@@ -343,9 +343,9 @@ export default function AdminDashboard() {
                           val: p.amount,
                         }))
                       : [
-                          { val: 0 },
-                          { val: Number(v) * 0.6 },
-                          { val: Number(v) },
+                          { label: "", val: 0 },
+                          { label: "", val: Number(v) * 0.6 },
+                          { label: "", val: Number(v) },
                         ];
 
                     return (
@@ -362,15 +362,12 @@ export default function AdminDashboard() {
                               {isCurrent ? null : (
                                 <CartesianGrid strokeDasharray="3 3" />
                               )}
-                              {isCurrent ? null : (
-                                <XAxis dataKey="label" hide />
-                              )}
+                              {/* Keep XAxis hidden but present so Tooltip gets the label */}
+                              <XAxis dataKey="label" hide />
                               {isCurrent ? null : <YAxis hide />}
                               <Tooltip
                                 wrapperStyle={{ padding: 0 }}
-                                labelFormatter={(l) =>
-                                  isCurrent ? String(l) : ""
-                                }
+                                labelFormatter={(l) => (l ? String(l) : "")}
                                 formatter={(val) =>
                                   typeof val === "number"
                                     ? [val.toLocaleString(), "Revenue"]
