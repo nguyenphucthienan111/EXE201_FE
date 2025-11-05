@@ -62,7 +62,8 @@ export default function AdminDashboard() {
     const data = revenue?.data;
     const trends = data?.trends || data?.series || [];
     const period = data?.period || "monthly";
-    const range = data?.dateRange || {};
+    // Use trendDateRange (historical window) if provided
+    const range = data?.trendDateRange || data?.dateRange || {};
 
     const map = new Map(
       trends.map((t) => [
