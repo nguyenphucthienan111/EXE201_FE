@@ -338,10 +338,21 @@ export default function AdminDashboard() {
                   Object.entries(revenueStats).map(([k, v]) => {
                     const isCurrent = k === "currentPeriodRevenue";
                     const sparkData = isCurrent
-                      ? revenueSeries.map((p) => ({
-                          label: p.label,
-                          val: p.amount,
-                        }))
+                      ? revenueSeries && revenueSeries.length > 1
+                        ? revenueSeries.map((p) => ({
+                            label: p.label,
+                            val: p.amount,
+                          }))
+                        : (() => {
+                            const p0 = revenueSeries && revenueSeries[0];
+                            const val = Number(p0?.amount || v || 0);
+                            const label = p0?.label || "";
+                            return [
+                              { label: "", val: 0 },
+                              { label, val },
+                              { label: "", val: Math.max(val, 0) },
+                            ];
+                          })()
                       : [
                           { label: "", val: 0 },
                           { label: "", val: Number(v) * 0.6 },
