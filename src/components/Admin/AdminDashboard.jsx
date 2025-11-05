@@ -60,7 +60,10 @@ export default function AdminDashboard() {
   // series để vẽ chart (API nên trả [{label, amount}] hoặc điều chỉnh khóa bên dưới cho khớp)
   const revenueSeries = useMemo(() => {
     const trends = revenue?.data?.trends || revenue?.data?.series || [];
-    return trends.map((t) => ({ label: t._id || t.label, amount: t.revenue ?? t.amount ?? 0 }));
+    return trends.map((t) => ({
+      label: t._id || t.label,
+      amount: t.revenue ?? t.amount ?? 0,
+    }));
   }, [revenue]);
 
   const loadAll = async () => {
@@ -258,7 +261,10 @@ export default function AdminDashboard() {
 
             {/* Summary cards */}
             {revLoading ? (
-              <div className="ad-skel-panel" style={{ height: 140, marginTop: 8 }} />
+              <div
+                className="ad-skel-panel"
+                style={{ height: 140, marginTop: 8 }}
+              />
             ) : (
               <div className="ad-revenue-grid">
                 {Object.keys(revenueStats || {}).length === 0 ? (
@@ -315,7 +321,9 @@ export default function AdminDashboard() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="ad-empty">No timeseries data for this period.</div>
+                <div className="ad-empty">
+                  No timeseries data for this period.
+                </div>
               )}
             </div>
           </section>
@@ -442,7 +450,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {!expiringSubscriptions || expiringSubscriptions.length === 0 ? (
+                  {!expiringSubscriptions ||
+                  expiringSubscriptions.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="ad-empty">
                         No expiring subscriptions.
